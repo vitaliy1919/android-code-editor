@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FF8000</color>
+    <color name="colorSecondary">#FF8000</color>
+    <color name="colorSurface">#3C3F41</color>
+    <color name="colorError">#E45356</color>
+    <color name="colorBackground">#303030</color>
+    <color name="colorSecondaryVariant">#37383A</color>
+
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorOnSecondary">#000000</color>
+    <color name="colorOnSurface">#FFFFFF</color>
+    <color name="colorOnError">#FFFFFF</color>
+    <color name="colorOnBackground">#7F7F7F</color>
+
+    <color name="colorStatusBar">#3C3F41</color>
+    <color name="darkula_background">#303030</color>
+    <color name="darkula_text">#ABB7C5</color>
+    <color name="darkula_divider">#555555</color>
+<!--    override val numberColor: String = "#6897BB",-->
+<!--    override val operatorColor: String = "#E8E2B7",-->
+<!--    override val bracketColor: String = "#E8E2B7",-->
+<!--    override val keywordColor: String = "#EC7600",-->
+<!--    override val typeColor: String = "#EC7600",-->
+<!--    override val langConstColor: String = "#EC7600",-->
+<!--    override val methodColor: String = "#FEC76C",-->
+    <color name="darkula_string">#6E875A</color>
+    <color name="darkula_comment">#66747B</color>
+    <color name="darcula_number">#6897BB</color>
+<!--    <color name="d">#EC7600</color>-->
+</resources>

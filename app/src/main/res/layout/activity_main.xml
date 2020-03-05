@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="invisible"/>
+    <ScrollView
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        tools:context=".MainActivity">
+
+        <LinearLayout
+            android:id="@+id/main_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#303030"
+            android:layout_gravity = "top">
+            <TextView
+                android:id="@+id/numbers_view"
+                android:background="#313335"
+                android:textColor="#ABB7C5"
+                android:padding="0sp"
+                android:layout_margin="1sp"
+                android:layout_marginEnd="0sp"
+                android:layout_marginRight="0sp"
+                android:text = "1"
+                android:fontFamily="@font/jetbrains_mono"
+                android:typeface="monospace"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textSize="12sp"
+                android:gravity="top">
+            </TextView>
+            <View
+                android:layout_height="match_parent"
+                android:layout_width="0.1sp"
+                android:background="@color/darkula_divider"
+                />
+            <HorizontalScrollView
+                android:id="@+id/wrap_horizontal_scroll"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true">
+                <MultiAutoCompleteTextView
+                    android:scrollHorizontally="true"
+                    android:scrollbars="none"
+                    android:id="@+id/code_editor"
+                    android:background="#303030"
+                    android:textColor="#ABB7C5"
+                    android:padding="0sp"
+                    android:minEms="10"
+                    android:minLines="5"
+                    android:autoLink="none"
+                    android:imeOptions="actionUnspecified"
+                    android:layout_margin="1sp"
+                    android:layout_marginStart="0sp"
+                    android:layout_marginLeft="0sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="top"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/jetbrains_mono"
+                    android:typeface="monospace"
+                    android:inputType="text|textMultiLine"
+                    tools:ignore="Autofill,LabelFor" />
+            </HorizontalScrollView>
+
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+</FrameLayout>

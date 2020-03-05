@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/open_file"
+        android:title="Open file"></item>
+    <item android:id="@+id/wrap_content"
+        android:title="Wrap Text"
+        android:checkable="true" />
+
+</menu>
