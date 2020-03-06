@@ -21,6 +21,7 @@
 <!--    override val operatorColor: String = "#E8E2B7",-->
 <!--    override val bracketColor: String = "#E8E2B7",-->
 <!--    override val keywordColor: String = "#EC7600",-->
+    <color name="darkula_keyword">#EC7600</color>
 <!--    override val typeColor: String = "#EC7600",-->
 <!--    override val langConstColor: String = "#EC7600",-->
 <!--    override val methodColor: String = "#FEC76C",-->

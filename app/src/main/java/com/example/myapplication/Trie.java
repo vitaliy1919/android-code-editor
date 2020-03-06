@@ -1,17 +1,9 @@
-package com.interview.suffixprefix;
+package com.example.myapplication;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Date 04/25/2016
- * @author Tushar Roy
- *
- * Insert/delete/search into trie data structure
- *
- * Reference
- * https://en.wikipedia.org/wiki/Trie
- */
+
 public class Trie {
 
     private class TrieNode {
@@ -45,7 +37,26 @@ public class Trie {
         //mark the current nodes endOfWord as true
         current.endOfWord = true;
     }
-
+    public int match(CharSequence s, int position) {
+        int index = position;
+        TrieNode current = root;
+        while (index < s.length()) {
+            if (Character.isLetterOrDigit(s.charAt(index)) || s.charAt(index) == '_') {
+                current = current.children.get(s.charAt(index));
+                if (current == null)
+                    return -1;
+                index++;
+            } else {
+                if (current != null && current.endOfWord)
+                    return index;
+                else
+                    return -1;
+            }
+        }
+        if (current != null && current.endOfWord)
+            return index;
+        return -1;
+    }
     /**
      * Recursive implementation of insert into trie
      */

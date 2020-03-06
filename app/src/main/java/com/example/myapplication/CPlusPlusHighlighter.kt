@@ -20,7 +20,104 @@ fun Editable.charAtSafe(i: Int):Char {
 class CPlusPlusHighlighter(val context: Context) {
     val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
     val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
-//    val reservedWords =
+    val reservedWords = arrayOf("alignas",
+            "alignof",
+            "and",
+            "and_eq",
+            "asm",
+            "atomic_cancel",
+            "atomic_commit",
+            "atomic_noexcept",
+            "auto",
+            "bitand",
+            "bitor",
+            "bool",
+            "break",
+            "case",
+            "catch",
+            "char",
+            "char8_t",
+            "char16_t ",
+            "char32_t",
+            "class",
+            "compl",
+            "concept",
+            "const",
+            "consteval",
+            "constexpr",
+            "constinit",
+            "const_cast",
+            "continue",
+            "co_await",
+            "co_return",
+            "co_yield",
+            "decltype",
+            "default",
+            "delete",
+            "do",
+            "double",
+            "dynamic_cast",
+            "else",
+            "enum",
+            "explicit",
+            "export",
+            "extern",
+            "false",
+            "float",
+            "for",
+            "friend",
+            "goto",
+            "if",
+            "inline",
+            "int",
+            "long",
+            "mutable",
+            "namespace",
+            "new",
+            "noexcept",
+            "not",
+            "not_eq",
+            "nullptr",
+            "operator",
+            "or",
+            "or_eq",
+            "private",
+            "protected",
+            "public",
+            "reflexpr",
+            "register",
+            "reinterpret_cast",
+            "requires",
+            "return",
+            "short",
+            "signed",
+            "sizeof",
+            "static",
+            "static_assert",
+            "static_cast",
+            "struct",
+            "switch",
+            "synchronized",
+            "template",
+            "this",
+            "thread_local",
+            "throw",
+            "true",
+            "try",
+            "typedef",
+            "typeid",
+            "typename",
+            "union",
+            "unsigned",
+            "using",
+            "virtual",
+            "void",
+            "volatile",
+            "wchar_t",
+            "while",
+            "xor",
+            "xor_e")
+    val reservedWordsTrie = Trie()
     val digitsPattern: Pattern
     val suffix = "ul{0,2}|l{1,2}u?"
 
@@ -59,29 +156,30 @@ class CPlusPlusHighlighter(val context: Context) {
         val digitsRegex = digitsRegexes.joinToString(separator = ")|(",prefix = "(", postfix = ")")
         Log.d("Pattern","""($digitsRegex) """)
         digitsPattern = Pattern.compile("""($digitsRegex)""", Pattern.CASE_INSENSITIVE)
+
+        for (word in reservedWords)
+            reservedWordsTrie.insert(word)
     }
     fun hightliht(s: Editable) {
         val startTime = System.currentTimeMillis()
         var position = 0;
         while (position < s.length) {
-            if (isIdentifier(position, s))
-                position = parseIdentifier(position, s)
-//                position = parseWithRegex(identifiersPattern, position, s, R.color.colorError)
-            else if (isComment(position, s))
-//                position++
-//                position = parseWithRegex(commentPattern, position, s, R.color.darkula_comment);
+            if (isIdentifier(position, s)){
+                val match = reservedWordsTrie.match(s, position)
+                if (match == -1)
+                    position = parseIdentifier(position, s)
+                else {
+                    setTextColor(s, R.color.darkula_keyword, position, match)
+                    position = match;
+                }
+            } else if (isComment(position, s))
                 position = parseComment(position, s)
             else if (isStringLiteral(position, s))
-//                position++
                 position = parseStringLiteral(position, s)
             else if (isNumber(position, s))
-//                position++
                 position = parseWithRegex(digitsPattern, position, s, R.color.darcula_number)
             else
                 position++
-//            Log.d("Position", position.toString())
-//            if (position == 844)
-//                Log.d("dkdk","ffjjf")
         }
         val end = System.currentTimeMillis()
         Log.d("Hightling duration",((end - startTime) / 1000.0).toString())
@@ -109,7 +207,7 @@ class CPlusPlusHighlighter(val context: Context) {
 
     fun parseIdentifier(position: Int, s: Editable): Int {
         var index = position
-        while (index < s.length && s[index].isLetterOrDigit() || s[index] == '_')
+        while (index < s.length && (s[index].isLetterOrDigit() || s[index] == '_'))
             index++
         setTextColor(s, R.color.colorError, position, index)
         return index
