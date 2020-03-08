@@ -34,6 +34,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.myapplication.views.AutoCompleteTextViewWithNumbers;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -52,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_GET = 1;
     boolean word_wrap = false;
     private ProgressBar progressBar;
-    private MultiAutoCompleteTextView codeEdit;
+    private AutoCompleteTextViewWithNumbers codeEdit;
     private TextView numbersView;
     private LinearLayout mainLayout;
     private HorizontalScrollView wrapScroll;
@@ -149,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
         mainLayout = findViewById(R.id.main_layout);
         progressBar = findViewById(R.id.progress_bar);
         highlighter = new CPlusPlusHighlighter(this);
+        codeEdit.initPaints();
 //        codeEdit.setMovementMethod(new ScrollingMovementMethod());
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);

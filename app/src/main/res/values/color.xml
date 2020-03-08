@@ -20,13 +20,15 @@
 <!--    override val numberColor: String = "#6897BB",-->
 <!--    override val operatorColor: String = "#E8E2B7",-->
 <!--    override val bracketColor: String = "#E8E2B7",-->
-<!--    override val keywordColor: String = "#EC7600",-->
+    <color name="darcula_operator">#E8E2B7</color>
+    <color name="darkula_bracket">#E8E2B7</color>
     <color name="darkula_keyword">#EC7600</color>
+    <color name="darkula_preprocessor">#BBB529</color>
 <!--    override val typeColor: String = "#EC7600",-->
 <!--    override val langConstColor: String = "#EC7600",-->
 <!--    override val methodColor: String = "#FEC76C",-->
     <color name="darkula_string">#6E875A</color>
     <color name="darkula_comment">#66747B</color>
-    <color name="darcula_number">#6897BB</color>
+    <color name="darkula_number">#6897BB</color>
 <!--    <color name="d">#EC7600</color>-->
 </resources>

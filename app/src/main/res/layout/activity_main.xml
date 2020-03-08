@@ -37,7 +37,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:textSize="12sp"
-                android:gravity="top">
+                android:gravity="right">
             </TextView>
             <View
                 android:layout_height="match_parent"
@@ -49,28 +49,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:fillViewport="true">
-                <MultiAutoCompleteTextView
-                    android:scrollHorizontally="true"
-                    android:scrollbars="none"
+
+                <com.example.myapplication.views.AutoCompleteTextViewWithNumbers
                     android:id="@+id/code_editor"
-                    android:background="#303030"
-                    android:textColor="#ABB7C5"
-                    android:padding="0sp"
-                    android:minEms="10"
-                    android:minLines="5"
-                    android:autoLink="none"
-                    android:imeOptions="actionUnspecified"
-                    android:layout_margin="1sp"
-                    android:layout_marginStart="0sp"
-                    android:layout_marginLeft="0sp"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:gravity="top"
-                    android:textSize="12sp"
+                    android:autoLink="none"
+                    android:background="#303030"
                     android:fontFamily="@font/jetbrains_mono"
+                    android:gravity="top"
+                    android:imeOptions="flagNoExtractUi"
+                    android:inputType="text|textNoSuggestions|textMultiLine"
+                    android:minLines="5"
+                    android:scrollbars="none"
+                    android:textColor="#ABB7C5"
+                    android:textSize="12sp"
                     android:typeface="monospace"
-                    android:inputType="text|textMultiLine"
-                    tools:ignore="Autofill,LabelFor" />
+                    tools:ignore="Autofill,LabelFor"
+                    tools:text="1838383" />
             </HorizontalScrollView>
 
 

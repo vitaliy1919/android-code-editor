@@ -4,10 +4,12 @@ import android.content.Context
 import android.text.Editable
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.util.DisplayMetrics
 import android.util.Log
 import androidx.core.content.ContextCompat
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+
 
 fun Editable.charAtSafe(i: Int):Char {
     if (i < this.length)
@@ -121,6 +123,9 @@ class CPlusPlusHighlighter(val context: Context) {
     val digitsPattern: Pattern
     val suffix = "ul{0,2}|l{1,2}u?"
 
+    val parentheses = "{}[]()"
+    val operators = "><=~:,.+-*/&|%^?"
+
     val decimalNumber = """[1-9][0-9']*($suffix)?"""
     val octalNumber = """0[0-7']*($suffix)?"""
     val hexNumber = """0x[0-9a-f']+($suffix)?"""
@@ -160,11 +165,18 @@ class CPlusPlusHighlighter(val context: Context) {
         for (word in reservedWords)
             reservedWordsTrie.insert(word)
     }
+
+
+
+
     fun hightliht(s: Editable) {
         val startTime = System.currentTimeMillis()
         var position = 0;
         while (position < s.length) {
-            if (isIdentifier(position, s)){
+            if (parentheses.indexOf(s[position]) != -1) {
+                setTextColor(s, R.color.darkula_bracket, position, position+1)
+                position++
+            } else if (isIdentifier(position, s)){
                 val match = reservedWordsTrie.match(s, position)
                 if (match == -1)
                     position = parseIdentifier(position, s)
@@ -174,10 +186,15 @@ class CPlusPlusHighlighter(val context: Context) {
                 }
             } else if (isComment(position, s))
                 position = parseComment(position, s)
-            else if (isStringLiteral(position, s))
+            else if (isPreProcessor(position, s))
+                position = parsePreProcessor(position, s)
+            else if (operators.indexOf(s[position]) != -1) {
+                setTextColor(s, R.color.darcula_operator, position, position+1)
+                position++
+            }  else if (isStringLiteral(position, s))
                 position = parseStringLiteral(position, s)
             else if (isNumber(position, s))
-                position = parseWithRegex(digitsPattern, position, s, R.color.darcula_number)
+                position = parseWithRegex(digitsPattern, position, s, R.color.darkula_number)
             else
                 position++
         }
@@ -185,6 +202,10 @@ class CPlusPlusHighlighter(val context: Context) {
         Log.d("Hightling duration",((end - startTime) / 1000.0).toString())
 
 
+    }
+
+    private fun isPreProcessor(position: Int, s: Editable):Boolean {
+        return s[position] =='#'
     }
 
     private fun isNumber(position: Int, s: Editable): Boolean {
@@ -209,7 +230,15 @@ class CPlusPlusHighlighter(val context: Context) {
         var index = position
         while (index < s.length && (s[index].isLetterOrDigit() || s[index] == '_'))
             index++
-        setTextColor(s, R.color.colorError, position, index)
+//        setTextColor(s, R.color.colorError, position, index)
+        return index
+    }
+
+    fun parsePreProcessor(position: Int, s: Editable): Int {
+        var index = position
+        while (index < s.length && !s[index].isWhitespace())
+            index++
+        setTextColor(s, R.color.darkula_preprocessor, position, index)
         return index
     }
 
