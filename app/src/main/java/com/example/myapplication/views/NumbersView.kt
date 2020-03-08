@@ -66,8 +66,8 @@ class NumbersView : View {
     }
 
     fun update() {
-        requestLayout();
         invalidate();
+//        requestLayout();
     }
     override fun onDraw(canvas: Canvas?) {
         Log.d("NumbersView", "Repainted!")
@@ -77,21 +77,32 @@ class NumbersView : View {
             val lineCount = codeEdit!!.lineCount
             val text = codeEdit!!.text
             val maxDigits = countDigits(lineCount + 1)
+//            Log.d("padding", "$paddingLeft $paddingRight $paddingTop")
             val maxWidth = symbolWidth*maxDigits
             viewWidth = maxWidth.toInt()+1
-            setPadding(maxWidth.toInt(), 0, 0, 0)
+//            setPadding(maxWidth.toInt(), 0, 0, 0)
             var curLine = 1
+            var lineStart = 0
             for (i in 0..lineCount-1) {
-                if (layout.getLineEnd(i) != 0 &&
-                        text[layout.getLineEnd(i) - 1] == '\n' || layout.getLineEnd(i) == text.length) {
+                if (i == lineStart) {
                     val currentDigits = countDigits(curLine)
                     val curWidth = (maxDigits - currentDigits)*symbolWidth
                     canvas?.drawText(curLine.toString(), curWidth, layout.getLineBaseline(i).toFloat(), textPaint)
                     curLine++
-
                 }
+                if ( i == lineCount-1 || (layout.getLineEnd(i) != 0 && text[layout.getLineEnd(i) - 1] == '\n'))
+                    lineStart = i + 1
+//                if (layout.getLineEnd(i) != 0 &&
+//                        text[layout.getLineEnd(i) - 1] == '\n' || layout.getLineEnd(i) == text.length) {
+//                    lineStart = true
+//
+//                }  else {
+//
+//                }
             }
-            viewHeight = layout.getLineBaseline(lineCount - 1)
+            viewHeight = layout.getLineBottom(lineCount - 1)
+            requestLayout();
+
 //            canvas?.drawText("1", 0, 1, 0f, layout.getLineBaseline(0).toFloat(), paint)
         }
     }
