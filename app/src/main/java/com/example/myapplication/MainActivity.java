@@ -35,6 +35,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.myapplication.views.AutoCompleteTextViewWithNumbers;
+import com.example.myapplication.views.NumbersView;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -54,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_GET = 1;
     boolean word_wrap = false;
     private ProgressBar progressBar;
-    private AutoCompleteTextViewWithNumbers codeEdit;
-    private TextView numbersView;
+    private MultiAutoCompleteTextView codeEdit;
+    private NumbersView numbersView;
     private LinearLayout mainLayout;
     private HorizontalScrollView wrapScroll;
     private int currentLineNumber = -1;
@@ -72,28 +73,28 @@ public class MainActivity extends AppCompatActivity {
         return count;
     }
 
-    public void updateNumbersView() {
-        int lineNumber = 1;
-        Layout codeLayout = codeEdit.getLayout();
-        CharSequence text = codeEdit.getText();
-        StringBuilder numberBuilder = new StringBuilder();
-        int lineStart = 0;
-        int linesCount = codeLayout.getLineCount();
-        for (int i = 0; i < linesCount; i++) {
-            if (word_wrap) {
-                if (i == lineStart) {
-                    numberBuilder.append(lineNumber).append('\n');
-                    lineNumber++;
-                } else
-                    numberBuilder.append('\n');
-                if (i == linesCount - 1 || text.charAt(codeLayout.getLineEnd(i) - 1) == '\n' )
-                    lineStart = i + 1;
-            } else {
-                numberBuilder.append(i+1).append('\n');
-            }
-        }
-        numbersView.setText(numberBuilder.toString());
-    }
+//    public void updateNumbersView() {
+//        int lineNumber = 1;
+//        Layout codeLayout = codeEdit.getLayout();
+//        CharSequence text = codeEdit.getText();
+//        StringBuilder numberBuilder = new StringBuilder();
+//        int lineStart = 0;
+//        int linesCount = codeLayout.getLineCount();
+//        for (int i = 0; i < linesCount; i++) {
+//            if (word_wrap) {
+//                if (i == lineStart) {
+//                    numberBuilder.append(lineNumber).append('\n');
+//                    lineNumber++;
+//                } else
+//                    numberBuilder.append('\n');
+//                if (i == linesCount - 1 || text.charAt(codeLayout.getLineEnd(i) - 1) == '\n' )
+//                    lineStart = i + 1;
+//            } else {
+//                numberBuilder.append(i+1).append('\n');
+//            }
+//        }
+//        numbersView.setText(numberBuilder.toString());
+//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -147,11 +148,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         codeEdit = findViewById(R.id.code_editor);
         numbersView = findViewById(R.id.numbers_view);
+        numbersView.initializeView(codeEdit);
         wrapScroll = findViewById(R.id.wrap_horizontal_scroll);
         mainLayout = findViewById(R.id.main_layout);
         progressBar = findViewById(R.id.progress_bar);
         highlighter = new CPlusPlusHighlighter(this);
-        codeEdit.initPaints();
+//        codeEdit.initPaints();
 //        codeEdit.setMovementMethod(new ScrollingMovementMethod());
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
@@ -163,11 +165,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
                 Log.d("Code editor", "Layout changed");
+
                 if (currentLineNumber != codeEdit.getLineCount() && shouldUpdate) {
                     shouldUpdate = false;
                     currentLineNumber = codeEdit.getLineCount();
                     Log.d("Code editor", "Numbers updated"+codeEdit.getLineCount());
-                    updateNumbersView();
+//                    updateNumbersView();
+                    numbersView.update();
+
                 }
             }
         });
@@ -236,7 +241,8 @@ public class MainActivity extends AppCompatActivity {
                         s.removeSpan(span);
                 }
 //                Pattern.compile("\\\\")
-                highlighter.hightliht(s);
+//                highlighter.hightliht(s);
+//                numbersView.invalidate();
 
 //                String data = s.toString();
                 shouldUpdate = true;

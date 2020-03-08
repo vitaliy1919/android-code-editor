@@ -23,22 +23,12 @@
             android:orientation="horizontal"
             android:background="#303030"
             android:layout_gravity = "top">
-            <TextView
+            <com.example.myapplication.views.NumbersView
                 android:id="@+id/numbers_view"
                 android:background="#313335"
-                android:textColor="#ABB7C5"
-                android:padding="0sp"
-                android:layout_margin="1sp"
-                android:layout_marginEnd="0sp"
-                android:layout_marginRight="0sp"
-                android:text = "1"
-                android:fontFamily="@font/jetbrains_mono"
-                android:typeface="monospace"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:textSize="12sp"
-                android:gravity="right">
-            </TextView>
+                android:layout_height="match_parent">
+            </com.example.myapplication.views.NumbersView>
             <View
                 android:layout_height="match_parent"
                 android:layout_width="0.1sp"
@@ -50,7 +40,7 @@
                 android:layout_height="match_parent"
                 android:fillViewport="true">
 
-                <com.example.myapplication.views.AutoCompleteTextViewWithNumbers
+                <MultiAutoCompleteTextView
                     android:id="@+id/code_editor"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
