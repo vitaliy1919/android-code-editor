@@ -10,7 +10,7 @@
         android:layout_gravity="center"
         android:visibility="invisible"/>
     <ScrollView
-
+        android:id="@+id/vertical_scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
@@ -67,6 +67,13 @@
         </LinearLayout>
 
     </ScrollView>
+    <com.example.myapplication.views.FastScroll
+        android:id="@+id/fast_scroll"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp"
 
+        android:layout_gravity="end"/>
 
 </FrameLayout>

@@ -13,6 +13,7 @@ import android.widget.MultiAutoCompleteTextView
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.example.myapplication.R
+import com.example.myapplication.utils.spToPx
 
 class NumbersView : View {
     constructor(context: Context):super(context)
@@ -56,9 +57,7 @@ class NumbersView : View {
         symbolWidth = width
         setPadding(symbolWidth.toInt(), 0,0,0)
     }
-    fun spToPx(sp: Float, context: Context): Float {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, context.resources.displayMetrics)
-    }
+
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)

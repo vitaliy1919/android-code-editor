@@ -25,6 +25,7 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.myapplication.views.AutoCompleteTextViewWithNumbers;
+import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 
 import java.io.BufferedInputStream;
@@ -59,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private NumbersView numbersView;
     private LinearLayout mainLayout;
     private HorizontalScrollView wrapScroll;
+    private ScrollView verticalScroll;
+    private FastScroll fastScroll;
     private int currentLineNumber = -1;
     private boolean shouldUpdate = true;
     private CPlusPlusHighlighter highlighter;
@@ -153,6 +157,10 @@ public class MainActivity extends AppCompatActivity {
         mainLayout = findViewById(R.id.main_layout);
         progressBar = findViewById(R.id.progress_bar);
         highlighter = new CPlusPlusHighlighter(this);
+        fastScroll = findViewById(R.id.fast_scroll);
+        verticalScroll = findViewById(R.id.vertical_scroll);
+        fastScroll.initialize(codeEdit, verticalScroll);
+
 //        codeEdit.initPaints();
 //        codeEdit.setMovementMethod(new ScrollingMovementMethod());
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
@@ -160,7 +168,6 @@ public class MainActivity extends AppCompatActivity {
 //        MultiAutoCompleteTextView textView = findViewById(R.id.);
         codeEdit.setAdapter(adapter);
         codeEdit.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-
         codeEdit.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
@@ -241,11 +248,12 @@ public class MainActivity extends AppCompatActivity {
                         s.removeSpan(span);
                 }
 //                Pattern.compile("\\\\")
-//                highlighter.hightliht(s);
+                highlighter.hightliht(s);
 //                numbersView.invalidate();
 
 //                String data = s.toString();
                 shouldUpdate = true;
+//                Log.d("Height", codeEdit.getHeight() + " " + verticalScroll.getHeight());
 //                int index = data.indexOf("int");
 //                while (index >= 0) {
 //                    s.setSpan(new ForegroundColorSpan(Color.RED), index, index+3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
