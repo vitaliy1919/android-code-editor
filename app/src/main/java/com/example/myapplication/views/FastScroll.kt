@@ -9,13 +9,13 @@ import android.view.View
 import android.widget.MultiAutoCompleteTextView
 import android.widget.ScrollView
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.plus
 import com.example.myapplication.R
 import com.example.myapplication.utils.dpToPx
 import kotlin.math.max
 import kotlin.math.min
 
 class FastScroll: View {
+    private var stopScroll: Boolean = false
     val activeHeight = dpToPx(45f, context)
     val unactiveHeight = dpToPx(34f, context)
     val unactiveHeightPadding = (activeHeight - unactiveHeight) / 2
@@ -46,18 +46,21 @@ class FastScroll: View {
     }
 
     fun setPercentage(percent: Float) {
-        val currentPosition = (unactiveRect.top + unactiveRect.bottom) / 2.0f
-        var offset = percent*measuredHeight - currentPosition
-        unactiveRect.offset(0f, offset)
-        activeRect.offset(0f, offset)
-        if (activeRect.top < 0) {
-            activeRect.offsetTo(0f, 0f)
-            unactiveRect.offsetTo(unactiveWidthPadding, unactiveHeightPadding)
-        } else if (activeRect.bottom > measuredHeight) {
-            activeRect.offsetTo(0f, measuredHeight.toFloat() - activeHeight)
-            unactiveRect.offsetTo(unactiveWidthPadding, measuredHeight - unactiveHeightPadding  - unactiveHeight)
-        }
-        invalidate()
+        val topOffset = percent*(measuredHeight - activeHeight)
+        activeRect.offsetTo(0f, topOffset)
+        unactiveRect.offsetTo(unactiveWidthPadding, topOffset + unactiveHeightPadding)
+//        val currentPosition = (unactiveRect.top + unactiveRect.bottom) / 2.0f
+//        var offset = percent*measuredHeight - currentPosition
+//        unactiveRect.offset(0f, offset)
+//        activeRect.offset(0f, offset)
+//        if (activeRect.top < 0) {
+//            activeRect.offsetTo(0f, 0f)
+//            unactiveRect.offsetTo(unactiveWidthPadding, unactiveHeightPadding)
+//        } else if (activeRect.bottom > measuredHeight) {
+//            activeRect.offsetTo(0f, measuredHeight.toFloat() - activeHeight)
+//            unactiveRect.offsetTo(unactiveWidthPadding, measuredHeight - unactiveHeightPadding  - unactiveHeight)
+//        }
+//        invalidate()
     }
     fun initialize(edit: MultiAutoCompleteTextView, scroll: ScrollView) {
 
@@ -74,8 +77,16 @@ class FastScroll: View {
             }
         })
         editScroll?.viewTreeObserver?.addOnScrollChangedListener {
-            val percent = editScroll!!.scrollY / editScroll!!.getChildAt(0).height.toFloat()
+            if (stopScroll) {
+                stopScroll = false
+                editScroll?.smoothScrollBy(0,0)
+            }
+            val curScroll =  editScroll!!.scrollY
+            val maxScroll = editScroll!!.getChildAt(0).height - editScroll!!.height
+            val percent = curScroll / maxScroll.toFloat()
             setPercentage(percent)
+            Log.d("Percent", "$percent, ${curScroll}, ${maxScroll}, ${maxScroll - curScroll}".toString())
+            invalidate()
         }
         paint.color = ContextCompat.getColor(context, R.color.colorPrimary)
         paintActive.color = ContextCompat.getColor(context, R.color.colorPrimary)
@@ -93,27 +104,21 @@ class FastScroll: View {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null)
             return true
-        val y = min(max(event.y, 0f),measuredHeight.toFloat())
+        val y = min(max(event.y, 0f),measuredHeight - activeHeight / 2)
+        val percent = y / (measuredHeight - activeHeight / 2)
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 if (!activeRect.contains(event.x, event.y)) {
                     isActive = false
                     return false;
                 }
+                stopScroll = true
+//                editScroll?.smoothScrollBy(0,0)
                 isActive = true
             }
             MotionEvent.ACTION_MOVE -> {
-                val currentPosition = (unactiveRect.top + unactiveRect.bottom) / 2.0f
-                var offset = y.toFloat() - currentPosition
-                unactiveRect.offset(0f, offset)
-                activeRect.offset(0f, offset)
-                if (activeRect.top < 0) {
-                    activeRect.offsetTo(0f, 0f)
-                    unactiveRect.offsetTo(unactiveWidthPadding, unactiveHeightPadding)
-                } else if (activeRect.bottom > measuredHeight) {
-                    activeRect.offsetTo(0f, measuredHeight.toFloat() - activeHeight)
-                    unactiveRect.offsetTo(unactiveWidthPadding, measuredHeight - unactiveHeightPadding  - unactiveHeight)
-                }
+                stopScroll = false
+                setPercentage(percent)
             }
             MotionEvent.ACTION_UP -> {
                 isActive = false
@@ -121,8 +126,8 @@ class FastScroll: View {
         }
         invalidate()
 //        Log.d("EventY", event.y.toString())
-        val progress = y / measuredHeight.toDouble()
-        val lineNumber = ((codeEdit!!.lineCount -1) * progress).toInt()
+//        val progress = y / measuredHeight.toDouble()
+        val lineNumber = ((codeEdit!!.lineCount -1) * percent).toInt()
         editScroll?.post(Runnable {
             val y: Int = codeEdit!!.getLayout().getLineTop(lineNumber) // e.g. I want to scroll to line 40
             editScroll?.scrollTo(0, y)
