@@ -1,60 +1,45 @@
 package com.example.myapplication;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.text.Editable;
-import android.text.Layout;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
 import android.text.TextWatcher;
-import android.text.method.ScrollingMovementMethod;
 import android.text.style.CharacterStyle;
-import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
-import android.widget.Scroller;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import com.example.myapplication.views.AutoCompleteTextViewWithNumbers;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.util.regex.Pattern;
+import java.io.OutputStreamWriter;
 
 public class MainActivity extends AppCompatActivity {
-    static final int REQUEST_IMAGE_GET = 1;
+    static final int REQUEST_OPEN_FILE = 1;
+    private static final int REQUEST_CREATE_FILE = 2;
+    private Uri currentlyOpenedFile = null;
     boolean word_wrap = false;
     private ProgressBar progressBar;
     private MultiAutoCompleteTextView codeEdit;
@@ -77,28 +62,6 @@ public class MainActivity extends AppCompatActivity {
         return count;
     }
 
-//    public void updateNumbersView() {
-//        int lineNumber = 1;
-//        Layout codeLayout = codeEdit.getLayout();
-//        CharSequence text = codeEdit.getText();
-//        StringBuilder numberBuilder = new StringBuilder();
-//        int lineStart = 0;
-//        int linesCount = codeLayout.getLineCount();
-//        for (int i = 0; i < linesCount; i++) {
-//            if (word_wrap) {
-//                if (i == lineStart) {
-//                    numberBuilder.append(lineNumber).append('\n');
-//                    lineNumber++;
-//                } else
-//                    numberBuilder.append('\n');
-//                if (i == linesCount - 1 || text.charAt(codeLayout.getLineEnd(i) - 1) == '\n' )
-//                    lineStart = i + 1;
-//            } else {
-//                numberBuilder.append(i+1).append('\n');
-//            }
-//        }
-//        numbersView.setText(numberBuilder.toString());
-//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -106,6 +69,7 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
@@ -121,25 +85,50 @@ public class MainActivity extends AppCompatActivity {
                     wrapScroll.addView(codeEdit);
                 }
                 shouldUpdate = true;
-//                codeEdit.setVisibility(View.INVISIBLE);
-//                codeEdit.setVisibility(View.VISIBLE);
                 item.setChecked(!item.isChecked());
                 break;
             case R.id.open_file:
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(MainActivity.this,
-                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                            1);
-                    return true;
-                }
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+//                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+//                        != PackageManager.PERMISSION_GRANTED) {
+//                    ActivityCompat.requestPermissions(MainActivity.this,
+//                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+//                            1);
+//                    return true;
+//                }
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+//                intent.setType("application/pdf");
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+//                startActivityForResult(intent, EDIT_REQUEST);
                 intent.setType("*/*");
                 if (intent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(intent, REQUEST_IMAGE_GET);
+                    startActivityForResult(intent, REQUEST_OPEN_FILE);
                 }
                 break;
+            case R.id.save_file:
+                if (currentlyOpenedFile != null) {
+                    try {
+                        OutputStream stream = getContentResolver().openOutputStream(currentlyOpenedFile);
+                        OutputStreamWriter writer = new OutputStreamWriter(stream);
+                        writer.write(String.valueOf(codeEdit.getText()));
+                        writer.close();
+                        Toast.makeText(this, "Saved succesfully", Toast.LENGTH_SHORT).show();
 
+                    } catch (FileNotFoundException e) {
+                        Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show();
+                    } catch (IOException e) {
+                        Toast.makeText(this, "Error while saving file", Toast.LENGTH_SHORT).show();
+
+                    }
+                }
+            case R.id.create_file:
+                Intent createFileIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                createFileIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                createFileIntent.setType("*/*");
+                createFileIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                if (createFileIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivityForResult(createFileIntent, REQUEST_CREATE_FILE);
+                }
         }
         return true;
     }
@@ -161,11 +150,8 @@ public class MainActivity extends AppCompatActivity {
         verticalScroll = findViewById(R.id.vertical_scroll);
         fastScroll.initialize(codeEdit, verticalScroll);
 
-//        codeEdit.initPaints();
-//        codeEdit.setMovementMethod(new ScrollingMovementMethod());
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
-//        MultiAutoCompleteTextView textView = findViewById(R.id.);
         codeEdit.setAdapter(adapter);
         codeEdit.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
         codeEdit.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
@@ -184,60 +170,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         Log.d("process", "Hello");
-
-//        try{
-//            Process su = Runtime.getRuntime().exec("ls /storage/self/primary");
-//            BufferedReader errorReader = new BufferedReader(
-//                    new InputStreamReader(su.getErrorStream()));
-//            BufferedReader reader = new BufferedReader(
-//                    new InputStreamReader(su.getInputStream()));
-//
-//            int read;
-//            char[] buffer = new char[4096];
-//            StringBuffer output = new StringBuffer();
-//            StringBuffer err = new StringBuffer();
-//            while ((read = errorReader.read(buffer)) > 0) {
-//                err.append(buffer, 0, read);
-//            }
-//            while ((read = reader.read(buffer)) > 0) {
-//                output.append(buffer, 0, read);
-//            }
-//            reader.close();
-//            Log.d("process", output.toString());
-//            Log.d("process", err.toString());
-//
-////            DataOutputStream outputStream = new DataOutputStream(su.getOutputStream());
-////            outputStream.writeBytes("exit\n");
-////            outputStream.flush();
-//            su.waitFor();
-//        }catch(IOException e){
-//           e.printStackTrace();
-//        }catch(InterruptedException e){
-////            throw new Exception(e);
-//            e.printStackTrace();
-//        }
-//        numbersView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Log.d("numbers on click", "click happend");
-//
-//            }
-//        });
         codeEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-//                String changedText = s.subSequence(start, start + count).toString();
-//                Log.d("beforeTextChanged", changedText);
-//                int newLines = countChar(changedText, '\n');
-//                Log.d("beforeTextChanged", "removed " + newLines + " new lines");
+
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-//                String changedText = s.subSequence(start, start + count).toString();
-//                Log.d("onTextChanged", changedText);
-//                int newLines = countChar(changedText, '\n');
-//                Log.d("onTextChanged", "added " + newLines + " new lines");
+
             }
 
             @Override
@@ -247,20 +188,9 @@ public class MainActivity extends AppCompatActivity {
                     if(span instanceof CharacterStyle)
                         s.removeSpan(span);
                 }
-//                Pattern.compile("\\\\")
+
                 highlighter.hightliht(s);
-//                numbersView.invalidate();
-
-//                String data = s.toString();
                 shouldUpdate = true;
-//                Log.d("Height", codeEdit.getHeight() + " " + verticalScroll.getHeight());
-//                int index = data.indexOf("int");
-//                while (index >= 0) {
-//                    s.setSpan(new ForegroundColorSpan(Color.RED), index, index+3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-////                    System.out.println(index);
-//                    index = data.indexOf("int", index + 1);
-//                }
-
             }
         });
     }
@@ -268,11 +198,21 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            final Uri fileURI = data.getData();
-//            final Uri canonized = getContentResolver().canonicalize(fileURI);
+        if (resultCode != RESULT_OK || data == null)
+            return;
+        final Uri fileURI = data.getData();
+        if (fileURI == null)
+            return;
+        currentlyOpenedFile = fileURI;
+        Cursor returnCursor = getContentResolver().query(fileURI, null, null, null, null);
+        int nameIndex = returnCursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+        returnCursor.moveToFirst();
+        String fileName = returnCursor.getString(nameIndex);
+        returnCursor.close();
+        getSupportActionBar().setSubtitle(fileName);
+        if (requestCode == REQUEST_OPEN_FILE ) {
             progressBar.setVisibility(View.VISIBLE);
-            Thread readFIle = new Thread(new Runnable() {
+            Thread readFile = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     long startTime = System.currentTimeMillis();
@@ -333,36 +273,10 @@ public class MainActivity extends AppCompatActivity {
 
 
             });
-            readFIle.start();
-
-//            txt.setText(buf.toString());
-
-            // Do work with photo saved at fullPhotoUri
+            readFile.start();
+        } else if (requestCode == REQUEST_CREATE_FILE) {
+            codeEdit.setText("");
         }
     }
 
-//    @Override
-//    public void onRequestPermissionsResult(int requestCode,
-//                                           String permissions[], int[] grantResults) {
-//        switch (requestCode) {
-//            case 1: {
-//                // If request is cancelled, the result arrays are empty.
-//                if (grantResults.length > 0
-//                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//
-//                    // permission was granted, yay! Do the
-//                    // contacts-related task you need to do.
-//                } else {
-//
-//                    // permission denied, boo! Disable the
-//                    // functionality that depends on this permission.
-//                    Toast.makeText(MainActivity.this, "Permission denied to read your External storage", Toast.LENGTH_SHORT).show();
-//                }
-//                return;
-//            }
-//
-//            // other 'case' lines to check for other
-//            // permissions this app might request
-//        }
-//    }
 }

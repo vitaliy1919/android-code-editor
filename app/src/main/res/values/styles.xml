@@ -6,7 +6,7 @@
         <item name="colorPrimary">@color/colorStatusBar</item>
         <item name="colorPrimaryDark">@color/colorSecondaryVariant</item>
         <item name="colorAccent">@color/colorPrimary</item>
-<!--        <item name="colorAccent">@color/colorAccent</item>-->
+        <!--        <item name="colorAccent">@color/colorAccent</item>-->
     </style>
 
     <style name="AppTheme.NoActionBar">

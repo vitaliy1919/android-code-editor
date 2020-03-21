@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/open_file"
-        android:title="Open file"></item>
-    <item android:id="@+id/wrap_content"
-        android:title="Wrap Text"
-        android:checkable="true" />
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:icon="@drawable/ic_more_vert_24px"
+        android:title=""
+        app:showAsAction="always">
+        <menu>
+            <item android:id="@+id/create_file"
+                android:title="New File"
+                android:icon="@drawable/ic_add_black_24dp" />
+            <item android:id="@+id/open_file"
+                android:title="Open file"
+                android:icon="@drawable/ic_folder_open_black_24dp"/>
+            <item android:id="@+id/save_file"
+                android:title="Save file"
+                android:icon="@drawable/ic_save_black_24dp"/>
+            <item android:id="@+id/wrap_content"
+                android:title="Wrap Text"
+                android:icon="@drawable/ic_wrap_text_black_24dp"
+                android:checkable="true" />
+        </menu>
+    </item>
+
 
 </menu>
