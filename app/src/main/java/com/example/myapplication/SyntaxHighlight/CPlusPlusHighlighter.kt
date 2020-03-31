@@ -1,12 +1,13 @@
-package com.example.myapplication
+package com.example.myapplication.SyntaxHighlight
 
 import android.content.Context
 import android.text.Editable
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
-import android.util.DisplayMetrics
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.myapplication.R
+import com.example.myapplication.Trie
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -124,7 +125,7 @@ class CPlusPlusHighlighter(val context: Context) {
     val suffix = "ul{0,2}|l{1,2}u?"
 
     val parentheses = "{}[]()"
-    val operators = "><=~:,.+-*/&|%^?"
+    val operators = "><=~:,.+-*/&|%^?;"
 
     val decimalNumber = """[1-9][0-9']*($suffix)?"""
     val octalNumber = """0[0-7']*($suffix)?"""
@@ -167,12 +168,18 @@ class CPlusPlusHighlighter(val context: Context) {
     }
 
 
+    fun checkNeedUpdate(s:CharSequence, start: Int, end: Int):Boolean {
+        for (i in start..end-1) {
+            if (s[i].isWhitespace() || parentheses.indexOf(s[i]) != -1 || operators.indexOf(s[i]) != -1)
+                return true
+        }
+        return false
+    }
 
-
-    fun hightliht(s: Editable) {
+    fun hightliht(s: Editable, start: Int, end: Int): Int {
         val startTime = System.currentTimeMillis()
-        var position = 0;
-        while (position < s.length) {
+        var position = start;
+        while (position < end && position < s.length) {
             if (parentheses.indexOf(s[position]) != -1) {
                 setTextColor(s, R.color.darkula_bracket, position, position+1)
                 position++
@@ -200,7 +207,7 @@ class CPlusPlusHighlighter(val context: Context) {
         }
         val end = System.currentTimeMillis()
         Log.d("Hightling duration",((end - startTime) / 1000.0).toString())
-
+        return position
 
     }
 

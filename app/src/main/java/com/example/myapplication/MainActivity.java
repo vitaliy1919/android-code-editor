@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -19,14 +20,16 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
+import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -50,6 +53,10 @@ public class MainActivity extends AppCompatActivity {
     private FastScroll fastScroll;
     private int currentLineNumber = -1;
     private boolean shouldUpdate = true;
+    private int startHighlight = -1;
+    private int endHighlight = -1;
+    private boolean needsUpdate = true;
+    private Handler handler;
     private CPlusPlusHighlighter highlighter;
     public int countChar(String str, char c) {
         int count = 0;
@@ -112,15 +119,15 @@ public class MainActivity extends AppCompatActivity {
                         OutputStreamWriter writer = new OutputStreamWriter(stream);
                         writer.write(String.valueOf(codeEdit.getText()));
                         writer.close();
-                        Toast.makeText(this, "Saved succesfully", Toast.LENGTH_SHORT).show();
+                        Snackbar.make(codeEdit, "Saved successfully", Snackbar.LENGTH_SHORT).show();
 
                     } catch (FileNotFoundException e) {
-                        Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show();
+                        Snackbar.make(codeEdit, "File not found", Snackbar.LENGTH_SHORT).show();
                     } catch (IOException e) {
-                        Toast.makeText(this, "Error while saving file", Toast.LENGTH_SHORT).show();
-
+                        Snackbar.make(codeEdit, "Error while saving file", Snackbar.LENGTH_SHORT).show();
                     }
                 }
+                break;
             case R.id.create_file:
                 Intent createFileIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 createFileIntent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -138,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        handler = new Handler(getMainLooper());
         setContentView(R.layout.activity_main);
         codeEdit = findViewById(R.id.code_editor);
         numbersView = findViewById(R.id.numbers_view);
@@ -157,40 +165,51 @@ public class MainActivity extends AppCompatActivity {
         codeEdit.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                Log.d("Code editor", "Layout changed");
+                //Log.d("Code editor", "Layout changed");
 
                 if (currentLineNumber != codeEdit.getLineCount() && shouldUpdate) {
                     shouldUpdate = false;
                     currentLineNumber = codeEdit.getLineCount();
-                    Log.d("Code editor", "Numbers updated"+codeEdit.getLineCount());
+                    //Log.d("Code editor", "Numbers updated"+codeEdit.getLineCount());
 //                    updateNumbersView();
                     numbersView.update();
 
                 }
             }
         });
-        Log.d("process", "Hello");
+        //Log.d("process", "Hello");
         codeEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
+                startHighlight  = ConverterKt.findCharBefore(s, Math.max(start - 1, 0), '\n');
+                endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+//                needsUpdate = highlighter.checkNeedUpdate(s, start, start+count);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                Object spansToRemove[] = s.getSpans(0, s.length(), Object.class);
-                for(Object span: spansToRemove){
-                    if(span instanceof CharacterStyle)
-                        s.removeSpan(span);
-                }
 
-                highlighter.hightliht(s);
+//                    handler.post(() -> {
+            long startTime = System.currentTimeMillis();
+
+            Object spansToRemove[] = s.getSpans(startHighlight, endHighlight, Object.class);
+            for (Object span : spansToRemove) {
+                if (span instanceof CharacterStyle)
+                    s.removeSpan(span);
+            }
+            Log.d("SpanUpdate", (System.currentTimeMillis() - startTime) / 1000.0 + "");
+            startTime = System.currentTimeMillis();
+            int end = highlighter.hightliht(s, startHighlight, endHighlight);
+            Log.d("HightLightTime", (System.currentTimeMillis() - startTime) / 1000.0 + "");
+//                    });
+//                }
+
                 shouldUpdate = true;
+
             }
         });
     }
@@ -216,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     long startTime = System.currentTimeMillis();
-//                    Log.d("URI result", fileURI.toString());
+//                    //Log.d("URI result", fileURI.toString());
                     InputStream inputStream = null;
                     String str = "";
                     final StringBuilder buf = new StringBuilder();
@@ -241,13 +260,13 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                     long difference = System.currentTimeMillis() - startTime;
-                    Log.d("File read", "Time:" + difference/ 1000.0);
+                    //Log.d("File read", "Time:" + difference/ 1000.0);
 
                     startTime = System.currentTimeMillis();
                     final String data1 = writer.toString();
 
                     difference = System.currentTimeMillis() - startTime;
-                    Log.d("File read", "Convert time:" + difference/ 1000.0);
+                    //Log.d("File read", "Convert time:" + difference/ 1000.0);
 
                     try {
                         inputStream.close();
@@ -264,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
 
                             long difference = System.currentTimeMillis() - startTime;
                             codeEdit.setText(data);
-                            Log.d("File read", "Set time:" + difference/ 1000.0);
+                            //Log.d("File read", "Set time:" + difference/ 1000.0);
 
                             progressBar.setVisibility(View.INVISIBLE);
                         }
