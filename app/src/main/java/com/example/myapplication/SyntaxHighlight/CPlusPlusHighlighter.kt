@@ -1,26 +1,69 @@
 package com.example.myapplication.SyntaxHighlight
 
 import android.content.Context
-import android.text.Editable
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
 import android.util.Log
-import androidx.core.content.ContextCompat
 import com.example.myapplication.R
+import com.example.myapplication.SyntaxHighlight.Tokens.Token
+import com.example.myapplication.SyntaxHighlight.Tokens.TokenType
 import com.example.myapplication.Trie
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
-fun Editable.charAtSafe(i: Int):Char {
+fun CharSequence.charAtSafe(i: Int):Char {
     if (i < this.length)
         return this[i]
     else
         return (-1).toChar()
 
 }
+class ParseResult(var token: Token? = null, var position: Int = -1)
+class CPlusPlusHighlighter(val context: Context):Highlighter() {
+    fun parseFromPosition(s: CharSequence, index: Int) : Int {
+        var parseResult: ParseResult = ParseResult()
+        var position = index
+        if (parentheses.indexOf(s[position]) != -1) {
+            parseResult.token = Token(TokenType.BRACKETS, s, position, position+1)
+            parseResult.position = position + 1
+        } else if (isIdentifier(position, s)){
+            val match = reservedWordsTrie.match(s, position)
+            if (match == -1)
+                parseResult = parseIdentifier(position, s)
+            else {
+                parseResult.token = Token(TokenType.KEYWORD, s, position, match)
+                parseResult.position = match
+            }
+        } else if (isComment(position, s))
+            parseResult = parseComment(position, s)
+        else if (isPreProcessor(position, s))
+            parseResult = parsePreProcessor(position, s)
+        else if (operators.indexOf(s[position]) != -1) {
+            parseResult.token = Token(TokenType.OPERATOR, s, position, position+1)
+            parseResult.position = position + 1
+        }  else if (isStringLiteral(position, s))
+            parseResult = parseStringLiteral(position, s)
+        else if (isNumber(position, s))
+            parseResult = parseWithRegex(digitsPattern, position, s, TokenType.NUMBER)
 
-class CPlusPlusHighlighter(val context: Context) {
+        if (parseResult.token != null) {
+            tokens.insertTail(parseResult.token!!)
+            position = parseResult.position
+        } else {
+            position++
+        }
+        return position
+    }
+    override fun parse(s: CharSequence) {
+        var position = 0;
+        while (position < s.length) {
+            position = parseFromPosition(s, position)
+        }
+    }
+
+    override fun update(s: CharSequence, start: Int, end: Int) {
+//        TODO("Not yet implemented")
+    }
+
     val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
     val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
     val reservedWords = arrayOf("alignas",
@@ -176,102 +219,100 @@ class CPlusPlusHighlighter(val context: Context) {
         return false
     }
 
-    fun hightliht(s: Editable, start: Int, end: Int): Int {
-        val startTime = System.currentTimeMillis()
-        var position = start;
-        while (position < end && position < s.length) {
-            if (parentheses.indexOf(s[position]) != -1) {
-                setTextColor(s, R.color.darkula_bracket, position, position+1)
-                position++
-            } else if (isIdentifier(position, s)){
-                val match = reservedWordsTrie.match(s, position)
-                if (match == -1)
-                    position = parseIdentifier(position, s)
-                else {
-                    setTextColor(s, R.color.darkula_keyword, position, match)
-                    position = match;
-                }
-            } else if (isComment(position, s))
-                position = parseComment(position, s)
-            else if (isPreProcessor(position, s))
-                position = parsePreProcessor(position, s)
-            else if (operators.indexOf(s[position]) != -1) {
-                setTextColor(s, R.color.darcula_operator, position, position+1)
-                position++
-            }  else if (isStringLiteral(position, s))
-                position = parseStringLiteral(position, s)
-            else if (isNumber(position, s))
-                position = parseWithRegex(digitsPattern, position, s, R.color.darkula_number)
-            else
-                position++
-        }
-        val end = System.currentTimeMillis()
-        Log.d("Hightling duration",((end - startTime) / 1000.0).toString())
-        return position
+//    fun hightliht(s: CharSequence, start: Int, end: Int): Int {
+//        val startTime = System.currentTimeMillis()
+//        var position = start;
+//        while (position < end && position < s.length) {
+//            if (parentheses.indexOf(s[position]) != -1) {
+//                addToken(s, TokenType.BRACKETS, position, position+1)
+//                position++
+//            } else if (isIdentifier(position, s)){
+//                val match = reservedWordsTrie.match(s, position)
+//                if (match == -1)
+//                    position = parseIdentifier(position, s)
+//                else {
+//                    addToken(s, TokenType.KEYWORD, position, match)
+//                    position = match;
+//                }
+//            } else if (isComment(position, s))
+//                position = parseComment(position, s)
+//            else if (isPreProcessor(position, s))
+//                position = parsePreProcessor(position, s)
+//            else if (operators.indexOf(s[position]) != -1) {
+//                addToken(s, TokenType.OPERATOR, position, position+1)
+//                position++
+//            }  else if (isStringLiteral(position, s))
+//                position = parseStringLiteral(position, s)
+//            else if (isNumber(position, s))
+//                position = parseWithRegex(digitsPattern, position, s, R.color.darkula_number)
+//            else
+//                position++
+//        }
+//        val end = System.currentTimeMillis()
+//        Log.d("Hightling duration",((end - startTime) / 1000.0).toString())
+//        return position
+//
+//    }
 
-    }
-
-    private fun isPreProcessor(position: Int, s: Editable):Boolean {
+    private fun isPreProcessor(position: Int, s: CharSequence):Boolean {
         return s[position] =='#'
     }
 
-    private fun isNumber(position: Int, s: Editable): Boolean {
+    private fun isNumber(position: Int, s: CharSequence): Boolean {
         return (s[position] == '.' || s[position].isDigit())
     }
 
-    fun isComment(position: Int, s: Editable): Boolean {
+    fun isComment(position: Int, s: CharSequence): Boolean {
         return (s[position] == '/' &&
             (s.charAtSafe(position+1) == '/' || s.charAtSafe(position+1) == '*'))
     }
 
-    fun isIdentifier(position: Int, s: Editable):Boolean {
+    fun isIdentifier(position: Int, s: CharSequence):Boolean {
         return (s[position] == '_' || s[position].isLetter())
     }
-    fun isStringLiteral(position: Int, s: Editable): Boolean {
+    fun isStringLiteral(position: Int, s: CharSequence): Boolean {
         if (s[position] == '\'' || s[position] == '\"')
             return true
         return false
     }
 
-    fun parseIdentifier(position: Int, s: Editable): Int {
+    fun parseIdentifier(position: Int, s: CharSequence): ParseResult {
         var index = position
         while (index < s.length && (s[index].isLetterOrDigit() || s[index] == '_'))
             index++
-//        setTextColor(s, R.color.colorError, position, index)
-        return index
+        return ParseResult(Token(TokenType.IDENTIFIER, s, position, index), index)
     }
 
-    fun parsePreProcessor(position: Int, s: Editable): Int {
+    fun parsePreProcessor(position: Int, s: CharSequence): ParseResult {
         var index = position
         while (index < s.length && !s[index].isWhitespace())
             index++
-        setTextColor(s, R.color.darkula_preprocessor, position, index)
-        return index
+        return ParseResult(Token(TokenType.PREPROCESSOR, s, position, index), index)
     }
 
-    fun parseComment(position: Int, s: Editable): Int {
+    fun parseComment(position: Int, s: CharSequence): ParseResult {
         var index = position
         if (s[index+1] == '*') {
             while (index < s.length) {
                 if (s[index] == '*') {
                     if (s.charAtSafe(index+1)== '/') {
-                        setTextColor(s, R.color.darkula_comment, position, index + 2)
-                        return index + 2
+//                        addToken(s, R.color.darkula_comment, position, index + 2)
+                        return ParseResult(Token(TokenType.MULTILINE_COMMENT, s, position, index + 2), index + 2)
                     }
                 }
                 index++
             }
-            return index
+            return ParseResult(null, index)
         } else {
             index++;
             while (index < s.length && s[index] != '\n')
                 index++
-            setTextColor(s, R.color.darkula_comment, position, index)
+//            addToken(s, R.color.darkula_comment, position, index)
 
-            return index + 1
+            return ParseResult(Token(TokenType.COMMENT, s, position,index + 1), index + 1)
         }
     }
-    fun parseStringLiteral(position: Int, s: Editable): Int {
+    fun parseStringLiteral(position: Int, s: CharSequence): ParseResult {
         var index = position + 1;
         val charType = s[position]
         while (index < s.length && s[index] != charType && s[index] != '\n') {
@@ -280,34 +321,39 @@ class CPlusPlusHighlighter(val context: Context) {
             index++;
         }
         if (s.charAtSafe(index) == charType)
-            setTextColor(s, R.color.darkula_string, position, index + 1);
-        return index + 1
+            return ParseResult(Token(TokenType.STRING_LITERAL, s, position, index + 1), index +  1)
+//            addToken(s, R.color.darkula_string, position, index + 1);
+        return ParseResult(null, index + 1)
     }
-    fun parseWithRegex(pattern: Pattern, position: Int, s: Editable, colorId: Int): Int {
+    fun parseWithRegex(pattern: Pattern, position: Int, s: CharSequence, type: TokenType): ParseResult {
         val matcher = pattern.matcher(s)
         matcher.region(position, s.length)
         if (matcher.lookingAt()) {
-            setTextColor(s, colorId, matcher)
-            return matcher.end()
+//            addToken(s, colorId, matcher)
+            return ParseResult(Token(type, s, matcher.start(), matcher.end()), matcher.end())
         }
-        return position + 1
+        return ParseResult(null, position + 1)
     }
-//    fun parseComment(position: Int, s: Editable) {
+//    fun parseComment(position: Int, s: CharSequence) {
 //
 //    }
-    fun setTextColor(s:Editable, colorId: Int, matcher: Matcher) {
-        s.setSpan(
-                ForegroundColorSpan(ContextCompat.getColor(context, colorId)),
-                matcher.start(),
-                matcher.end(),
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    fun addToken(s:CharSequence, type: TokenType, matcher: Matcher) {
+        addToken(s, type, matcher.start(), matcher.end())
+//        tokens.insertTail(Token(type, s, matcher.start(), matcher.end()))
+//        s.setSpan(
+//                ForegroundColorSpan(ContextCompat.getColor(context, colorId)),
+//                matcher.start(),
+//                matcher.end(),
+//                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
-    fun setTextColor(s:Editable, colorId: Int, begin: Int, end: Int) {
-        s.setSpan(
-                ForegroundColorSpan(ContextCompat.getColor(context, colorId)),
-                begin,
-                end,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    fun addToken(s:CharSequence, type: TokenType, begin: Int, end: Int) {
+        tokens.insertTail(Token(type, s, begin, end))
+
+//        s.setSpan(
+//                ForegroundColorSpan(ContextCompat.getColor(context, colorId)),
+//                begin,
+//                end,
+//                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 }
