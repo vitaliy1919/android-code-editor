@@ -71,6 +71,12 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
             colorLines(view, highlighter, firstBoundaryLine, lastBoundaryLine)
             return
         }
-
+        if (firstBoundaryLine < firstColoredLine) {
+            colorLines(view, highlighter, firstBoundaryLine, firstColoredLine)
+            removeColoring(view, lastBoundaryLine, lastColoredLine)
+        } else {
+            removeColoring(view, firstColoredLine, firstBoundaryLine)
+            colorLines(view, highlighter, lastColoredLine, lastColoredLine)
+        }
     }
 }

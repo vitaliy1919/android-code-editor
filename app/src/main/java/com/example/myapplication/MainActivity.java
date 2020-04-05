@@ -26,6 +26,9 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
+import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
+import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
+import com.example.myapplication.SyntaxHighlight.Styler.Styler;
 import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
@@ -58,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean needsUpdate = true;
     private Handler handler;
     private CPlusPlusHighlighter highlighter;
+    private Styler styler;
     public int countChar(String str, char c) {
         int count = 0;
 
@@ -162,22 +166,27 @@ public class MainActivity extends AppCompatActivity {
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
         codeEdit.setAdapter(adapter);
         codeEdit.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-        codeEdit.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                //Log.d("Code editor", "Layout changed");
-
-                if (currentLineNumber != codeEdit.getLineCount() && shouldUpdate) {
-                    shouldUpdate = false;
-                    currentLineNumber = codeEdit.getLineCount();
-                    //Log.d("Code editor", "Numbers updated"+codeEdit.getLineCount());
-//                    updateNumbersView();
-                    numbersView.update();
-
-                }
-            }
-        });
+//        codeEdit.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+//            @Override
+//            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//                //Log.d("Code editor", "Layout changed");
+//
+//                if (currentLineNumber != codeEdit.getLineCount() && shouldUpdate) {
+//                    shouldUpdate = false;
+//                    currentLineNumber = codeEdit.getLineCount();
+//                    //Log.d("Code editor", "Numbers updated"+codeEdit.getLineCount());
+////                    updateNumbersView();
+//                    numbersView.update();
+//
+//                }
+//            }
+//        });
+        styler = new GeneralStyler(codeEdit, new CPlusPlusHighlighter(this),new GeneralColorScheme());
         //Log.d("process", "Hello");
+        verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            styler.updateStyling(verticalScroll.getScrollY());
+        });
+
         codeEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -196,13 +205,13 @@ public class MainActivity extends AppCompatActivity {
 //                    handler.post(() -> {
             long startTime = System.currentTimeMillis();
 
-            Object spansToRemove[] = s.getSpans(startHighlight, endHighlight, Object.class);
-            for (Object span : spansToRemove) {
-                if (span instanceof CharacterStyle)
-                    s.removeSpan(span);
-            }
-            Log.d("SpanUpdate", (System.currentTimeMillis() - startTime) / 1000.0 + "");
-            startTime = System.currentTimeMillis();
+//            Object spansToRemove[] = s.getSpans(startHighlight, endHighlight, Object.class);
+//            for (Object span : spansToRemove) {
+//                if (span instanceof CharacterStyle)
+//                    s.removeSpan(span);
+//            }
+//            Log.d("SpanUpdate", (System.currentTimeMillis() - startTime) / 1000.0 + "");
+//            startTime = System.currentTimeMillis();
             Log.d("HightLightTime", (System.currentTimeMillis() - startTime) / 1000.0 + "");
 //                    });
 //                }
