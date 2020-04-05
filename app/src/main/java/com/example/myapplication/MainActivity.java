@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
         styler = new GeneralStyler(codeEdit, new CPlusPlusHighlighter(this),new GeneralColorScheme());
         //Log.d("process", "Hello");
         verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            Log.d("Scroll", verticalScroll.getScrollY() + "");
             styler.updateStyling(verticalScroll.getScrollY());
         });
 

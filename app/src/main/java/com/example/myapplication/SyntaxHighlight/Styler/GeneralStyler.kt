@@ -78,5 +78,7 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
             removeColoring(view, firstColoredLine, firstBoundaryLine)
             colorLines(view, highlighter, lastColoredLine, lastColoredLine)
         }
+        firstColoredLine = firstBoundaryLine
+        lastColoredLine = lastBoundaryLine
     }
 }
