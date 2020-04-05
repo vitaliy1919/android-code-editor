@@ -203,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
             }
             Log.d("SpanUpdate", (System.currentTimeMillis() - startTime) / 1000.0 + "");
             startTime = System.currentTimeMillis();
-            int end = highlighter.hightliht(s, startHighlight, endHighlight);
             Log.d("HightLightTime", (System.currentTimeMillis() - startTime) / 1000.0 + "");
 //                    });
 //                }
@@ -283,6 +282,7 @@ public class MainActivity extends AppCompatActivity {
 
                             long difference = System.currentTimeMillis() - startTime;
                             codeEdit.setText(data);
+                            highlighter.parse(codeEdit.getText());
                             //Log.d("File read", "Set time:" + difference/ 1000.0);
 
                             progressBar.setVisibility(View.INVISIBLE);

@@ -64,9 +64,9 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 //        TODO("Not yet implemented")
     }
 
-    val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
-    val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
-    val reservedWords = arrayOf("alignas",
+    private val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
+    private val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
+    private val reservedWords = arrayOf("alignas",
             "alignof",
             "and",
             "and_eq",
@@ -163,31 +163,31 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             "while",
             "xor",
             "xor_e")
-    val reservedWordsTrie = Trie()
-    val digitsPattern: Pattern
-    val suffix = "ul{0,2}|l{1,2}u?"
+    private val reservedWordsTrie = Trie()
+    private val digitsPattern: Pattern
+    private val suffix = "ul{0,2}|l{1,2}u?"
 
-    val parentheses = "{}[]()"
-    val operators = "><=~:,.+-*/&|%^?;"
+    private val parentheses = "{}[]()"
+    private val operators = "><=~:,.+-*/&|%^?;"
 
-    val decimalNumber = """[1-9][0-9']*($suffix)?"""
-    val octalNumber = """0[0-7']*($suffix)?"""
-    val hexNumber = """0x[0-9a-f']+($suffix)?"""
-    val binaryNumber = """0b[0-1']+($suffix)?"""
+    private val decimalNumber = """[1-9][0-9']*($suffix)?"""
+    private val octalNumber = """0[0-7']*($suffix)?"""
+    private val hexNumber = """0x[0-9a-f']+($suffix)?"""
+    private val binaryNumber = """0b[0-1']+($suffix)?"""
 
 //    val floatSequence = decimalNumber
-    val digitSequence = """\d+"""
-    val floatExponent = """e(\+|-)?$digitSequence"""
-    val floatSuffix = """(f|l)?"""
-    val floatType1 = """$digitSequence$floatExponent"""
-    val floatType2 = """$digitSequence\.($digitSequence)?($floatExponent)?($floatSuffix)?"""
-    val floatType3 = """($digitSequence)?\.($digitSequence)($floatExponent)?($floatSuffix)?"""
+    private val digitSequence = """\d+"""
+    private val floatExponent = """e(\+|-)?$digitSequence"""
+    private val floatSuffix = """(f|l)?"""
+    private val floatType1 = """$digitSequence$floatExponent"""
+    private val floatType2 = """$digitSequence\.($digitSequence)?($floatExponent)?($floatSuffix)?"""
+    private val floatType3 = """($digitSequence)?\.($digitSequence)($floatExponent)?($floatSuffix)?"""
 
-    val hexSequence = """[0-9a-f]+"""
-    val hexFloatExponent = """p(\+|-)?$decimalNumber"""
-    val hexFloatType1 = """0x($hexSequence)($hexFloatExponent)?($floatSuffix)?"""
-    val hexFloatType2 = """0x($hexSequence)\.($hexFloatExponent)?($floatSuffix)?"""
-    val hexFloatType3 = """0x($hexSequence)?\.($hexSequence)($hexFloatExponent)?($floatSuffix)?"""
+    private val hexSequence = """[0-9a-f]+"""
+    private val hexFloatExponent = """p(\+|-)?$decimalNumber"""
+    private val hexFloatType1 = """0x($hexSequence)($hexFloatExponent)?($floatSuffix)?"""
+    private val hexFloatType2 = """0x($hexSequence)\.($hexFloatExponent)?($floatSuffix)?"""
+    private val hexFloatType3 = """0x($hexSequence)?\.($hexSequence)($hexFloatExponent)?($floatSuffix)?"""
 
     init {
         val digitsRegexes = arrayOf(
