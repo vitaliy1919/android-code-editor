@@ -6,7 +6,7 @@ import com.example.myapplication.SyntaxHighlight.Highlighter
 import com.example.myapplication.SyntaxHighlight.Tokens.Token
 
 abstract class Styler(var view: EditText, var highlighter: Highlighter, var scheme: ColorScheme) {
-    abstract fun updateStyling(scrollY: Int)
+    abstract fun updateStyling(scrollY: Int, height: Int)
     abstract fun styleToken(token: Token)
     abstract fun resetText()
 }

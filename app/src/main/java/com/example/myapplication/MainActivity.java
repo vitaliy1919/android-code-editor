@@ -62,6 +62,8 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler;
     private CPlusPlusHighlighter highlighter;
     private Styler styler;
+    private boolean highlightCode = true;
+
     public int countChar(String str, char c) {
         int count = 0;
 
@@ -140,6 +142,19 @@ public class MainActivity extends AppCompatActivity {
                 if (createFileIntent.resolveActivity(getPackageManager()) != null) {
                     startActivityForResult(createFileIntent, REQUEST_CREATE_FILE);
                 }
+                break;
+            case R.id.highlight_code:
+                highlightCode = !item.isChecked();
+                if (!highlightCode) {
+                    highlighter.parse(codeEdit.getText());
+                } else {
+                    Object spansToRemove[] = codeEdit.getText().getSpans(0, codeEdit.getLayout().getLineEnd(codeEdit.getLineCount() - 1), Object.class);
+                    for (Object span : spansToRemove) {
+                        if (span instanceof CharacterStyle)
+                            codeEdit.getText().removeSpan(span);
+                    }
+                }
+                item.setChecked(!item.isChecked());
         }
         return true;
     }
@@ -181,11 +196,12 @@ public class MainActivity extends AppCompatActivity {
 //                }
 //            }
 //        });
-        styler = new GeneralStyler(codeEdit, new CPlusPlusHighlighter(this),new GeneralColorScheme());
+        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
         //Log.d("process", "Hello");
         verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
             Log.d("Scroll", verticalScroll.getScrollY() + "");
-            styler.updateStyling(verticalScroll.getScrollY());
+            if (highlightCode)
+                styler.updateStyling(verticalScroll.getScrollY(), verticalScroll.getHeight());
         });
 
         codeEdit.addTextChangedListener(new TextWatcher() {
