@@ -14,6 +14,10 @@ import kotlin.math.min
 
 class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorScheme): Styler(view, highlighter, scheme) {
     var colored:Boolean = false
+    val windowHeight:Int = 500
+    val addLines: Int = 50
+    var prevTopLine: Int = -1
+    var prevBottomLine: Int = -1
     override fun styleToken( token: Token) {
         view.text.setSpan(
                 ForegroundColorSpan(ContextCompat.getColor(view.context, scheme.getColor(token.type))),
@@ -72,7 +76,7 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
     }
 
     private fun isRefreshNeeded(firstVisibleLine: Int, lastVisibleLine: Int): Boolean {
-        return (firstColoredLine == -1 || abs(lastColoredLine - lastVisibleLine) < 150 || abs(firstColoredLine - firstVisibleLine) < 150)
+        return (firstColoredLine == -1 || abs(lastColoredLine - lastVisibleLine) < 499 )
     }
     private fun getColorBoundaries(firstVisibleLine: Int, lastVisibleLine: Int): Pair<Int, Int> {
         val lineNumber = lastVisibleLine - firstVisibleLine + 1
@@ -82,9 +86,13 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
             return Pair(firstVisibleLine, firstVisibleLine + 500)
         }
         if (firstVisibleLine > firstColoredLine)
-            return Pair(firstVisibleLine, min(lastColoredLine + (firstVisibleLine - firstColoredLine), view.lineCount - 1))
+            return Pair(
+                    max(firstVisibleLine - (firstVisibleLine - firstColoredLine) / 2, 0),
+                    min(lastColoredLine + (firstVisibleLine - firstColoredLine) / 2, view.lineCount - 1))
         else
-            return Pair(max(firstColoredLine - (lastColoredLine - lastVisibleLine), 0), lastVisibleLine)
+            return Pair(
+                    max(firstColoredLine - (lastColoredLine - lastVisibleLine) / 2, 0),
+                    min(lastVisibleLine + (lastColoredLine - lastVisibleLine) / 2, view.lineCount - 1))
     }
     override fun updateStyling(scrollY: Int, height: Int) {
 //        if (!colored) {
@@ -107,7 +115,10 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
             colorLines(view, highlighter, firstBoundaryLine, lastBoundaryLine)
             return
         }
-        if (firstBoundaryLine < firstColoredLine) {
+        if (firstBoundaryLine > lastColoredLine || firstColoredLine > lastBoundaryLine) {
+            removeColoring(view, firstColoredLine, lastColoredLine)
+            colorLines(view, highlighter, firstBoundaryLine, lastBoundaryLine)
+        } else if (firstBoundaryLine < firstColoredLine) {
             colorLines(view, highlighter, firstBoundaryLine, firstColoredLine)
             removeColoring(view, lastBoundaryLine, lastColoredLine)
         } else {
