@@ -1,5 +1,6 @@
 package com.example.myapplication.SyntaxHighlight.Styler
 
+import android.os.Handler
 import android.text.Spanned
 import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
@@ -12,12 +13,18 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
+
+enum class VisibleSectionMovement {
+    DONT_INTERSECT, MOVE_UP, MOVE_DOWN
+}
+
 class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorScheme): Styler(view, highlighter, scheme) {
     var colored:Boolean = false
-    val windowHeight:Int = 500
-    val addLines: Int = 50
+    val colorWindowHeight:Int = 500
+    val allowableOffset: Int = 100
     var prevTopLine: Int = -1
     var prevBottomLine: Int = -1
+    var handler: Handler = Handler(view.context.mainLooper)
     override fun styleToken( token: Token) {
         view.text.setSpan(
                 ForegroundColorSpan(ContextCompat.getColor(view.context, scheme.getColor(token.type))),
@@ -41,8 +48,11 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
         val tokens = highlighter.tokens
         var iterator = tokens.head
         while (iterator != null) {
-            if (iterator.data.start >= startCharacter && iterator.data.end <= endCharacter)
-                styleToken(iterator.data)
+            if (iterator.data.start >= startCharacter && iterator.data.start <= endCharacter) {
+                val data = iterator.data
+                handler.post(Runnable {styleToken(data)  })
+            }
+
             iterator = iterator.next
             if (iterator == tokens.head)
                 break
@@ -76,56 +86,68 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
     }
 
     private fun isRefreshNeeded(firstVisibleLine: Int, lastVisibleLine: Int): Boolean {
-        return (firstColoredLine == -1 || abs(lastColoredLine - lastVisibleLine) < 499 )
+//        val viewHeight
+        if (firstColoredLine == -1)
+            return true
+        if (firstVisibleLine > prevTopLine) {
+            // move down
+            if (lastColoredLine - lastVisibleLine < colorWindowHeight / 2 - allowableOffset)
+                return true
+        } else if (firstVisibleLine - firstColoredLine < colorWindowHeight / 2 - allowableOffset)
+            return true
+        return false
     }
     private fun getColorBoundaries(firstVisibleLine: Int, lastVisibleLine: Int): Pair<Int, Int> {
-        val lineNumber = lastVisibleLine - firstVisibleLine + 1
+        val NumberOfLines = lastVisibleLine - firstVisibleLine + 1
         if (firstColoredLine == -1) {
-//            val firstBoundaryLine = max(firstVisibleLine - lineNumber * 5, 0)
-//            val lastBoundaryLine = min(lastVisibleLine + lineNumber * 5, view.lineCount - 1)
-            return Pair(firstVisibleLine, firstVisibleLine + 500)
+            return Pair(firstVisibleLine, min (lastVisibleLine + colorWindowHeight, view.lineCount - 1))
+        } else {
+            val middle = (lastVisibleLine + firstVisibleLine) / 2
+
+            val firstLine = middle - colorWindowHeight / 2
+            val lastLine  = middle + colorWindowHeight / 2
+            val adjustFirst = max(0, firstLine) - firstLine
+            val adjustLast = lastLine - min(view.lineCount - 1, lastLine)
+            return Pair(firstLine + adjustFirst - adjustLast, lastLine + adjustFirst - adjustLast)
         }
-        if (firstVisibleLine > firstColoredLine)
-            return Pair(
-                    max(firstVisibleLine - (firstVisibleLine - firstColoredLine) / 2, 0),
-                    min(lastColoredLine + (firstVisibleLine - firstColoredLine) / 2, view.lineCount - 1))
-        else
-            return Pair(
-                    max(firstColoredLine - (lastColoredLine - lastVisibleLine) / 2, 0),
-                    min(lastVisibleLine + (lastColoredLine - lastVisibleLine) / 2, view.lineCount - 1))
+//        if (firstColoredLine == -1) {
+////            val firstBoundaryLine = max(firstVisibleLine - lineNumber * 5, 0)
+////            val lastBoundaryLine = min(lastVisibleLine + lineNumber * 5, view.lineCount - 1)
+//            return Pair(firstVisibleLine, firstVisibleLine + 500)
+//        }
+//        if (firstVisibleLine > firstColoredLine)
+//            return Pair(
+//                    max(firstVisibleLine - (firstVisibleLine - firstColoredLine) / 2, 0),
+//                    min(lastColoredLine + (firstVisibleLine - firstColoredLine) / 2, view.lineCount - 1))
+//        else
+//            return Pair(
+//                    max(firstColoredLine - (lastColoredLine - lastVisibleLine) / 2, 0),
+//                    min(lastVisibleLine + (lastColoredLine - lastVisibleLine) / 2, view.lineCount - 1))
     }
     override fun updateStyling(scrollY: Int, height: Int) {
-//        if (!colored) {
-//            colored = true
-//            val startTime = System.currentTimeMillis()
-//            colorLines(view, highlighter, 0, (view.lineCount - 1) /2)
-//            Log.d("Styling",((System.currentTimeMillis() - startTime) / 1000.0).toString())
-//
-//        }
-//        return
-//        val lineData =
-        var (firstVisibleLine, lastVisibleLine) = getVisibleLines(view, scrollY, height)
+
+        val (firstVisibleLine, lastVisibleLine) = getVisibleLines(view, scrollY, height)
         if (!isRefreshNeeded(firstVisibleLine, lastVisibleLine))
             return
         val (firstBoundaryLine, lastBoundaryLine) = getColorBoundaries(firstVisibleLine, lastVisibleLine)
-//        var lastVisibleLine = lineData.second
         if (firstColoredLine == -1) {
-            firstColoredLine = firstBoundaryLine
-            lastColoredLine = lastBoundaryLine
             colorLines(view, highlighter, firstBoundaryLine, lastBoundaryLine)
-            return
-        }
-        if (firstBoundaryLine > lastColoredLine || firstColoredLine > lastBoundaryLine) {
+        } else if (firstVisibleLine > lastColoredLine || firstColoredLine > lastVisibleLine) {
+            // colored area and visible area do not intersect
             removeColoring(view, firstColoredLine, lastColoredLine)
             colorLines(view, highlighter, firstBoundaryLine, lastBoundaryLine)
         } else if (firstBoundaryLine < firstColoredLine) {
+            // scrolling up
             colorLines(view, highlighter, firstBoundaryLine, firstColoredLine)
             removeColoring(view, lastBoundaryLine, lastColoredLine)
         } else {
+            // scrolling down
             removeColoring(view, firstColoredLine, firstBoundaryLine)
             colorLines(view, highlighter, lastColoredLine, lastBoundaryLine)
         }
         firstColoredLine = firstBoundaryLine
         lastColoredLine = lastBoundaryLine
+        prevTopLine = firstVisibleLine
+        prevBottomLine = lastVisibleLine
     }
 }
