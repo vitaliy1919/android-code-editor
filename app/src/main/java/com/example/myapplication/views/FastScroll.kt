@@ -79,7 +79,7 @@ class FastScroll: View {
         editScroll?.viewTreeObserver?.addOnScrollChangedListener {
             if (stopScroll) {
                 stopScroll = false
-                editScroll?.smoothScrollBy(0,0)
+                editScroll?.scrollBy(0,0)
             }
             val curScroll =  editScroll!!.scrollY
             val maxScroll = editScroll!!.getChildAt(0).height - editScroll!!.height

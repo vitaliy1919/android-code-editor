@@ -9,6 +9,9 @@ import android.widget.EditText
 import androidx.core.content.ContextCompat
 import com.example.myapplication.SyntaxHighlight.Highlighter
 import com.example.myapplication.SyntaxHighlight.Tokens.Token
+import java.util.concurrent.Executor
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadPoolExecutor
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -20,9 +23,10 @@ enum class VisibleSectionMovement {
 
 class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorScheme): Styler(view, highlighter, scheme) {
     var colored:Boolean = false
-    val colorWindowHeight:Int = 500
-    val allowableOffset: Int = 100
+    var colorWindowHeight:Int = 60
+    val allowableOffset: Int = 0
     var prevTopLine: Int = -1
+//    val executor = ThreadPoolExecutor()
     var prevBottomLine: Int = -1
     var handler: Handler = Handler(view.context.mainLooper)
     override fun styleToken( token: Token) {
@@ -42,26 +46,30 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
     }
 
     private fun colorLines(view: EditText, highlighter: Highlighter, firstVisibleLine: Int, lastVisibleLine: Int) {
-        val startTime = System.currentTimeMillis()
-        val startCharacter = view.layout.getLineStart(firstVisibleLine)
-        val endCharacter = view.layout.getLineEnd(lastVisibleLine)
-        val tokens = highlighter.tokens
-        var iterator = tokens.head
-        while (iterator != null) {
-            if (iterator.data.start >= startCharacter && iterator.data.start <= endCharacter) {
-                val data = iterator.data
-                handler.post(Runnable {styleToken(data)  })
-            }
 
-            iterator = iterator.next
-            if (iterator == tokens.head)
-                break
-        }
-        Log.d("Coloring","${((System.currentTimeMillis() - startTime) / 1000.0).toString()}s. ${lastVisibleLine - firstVisibleLine} colored")
+            val startTime = System.currentTimeMillis()
+            val startCharacter = view.layout.getLineStart(firstVisibleLine)
+            val endCharacter = view.layout.getLineEnd(lastVisibleLine)
+            val tokens = highlighter.tokens
+            var iterator = tokens.head
+            while (iterator != null) {
+                if (iterator.data.start >= startCharacter && iterator.data.start <= endCharacter) {
+                    val data = iterator.data
+                    styleToken(data)
+                }
+
+                iterator = iterator.next
+                if (iterator == tokens.head)
+                    break
+            }
+            Log.d("Coloring","${((System.currentTimeMillis() - startTime) / 1000.0).toString()}s. ${lastVisibleLine - firstVisibleLine} colored")
+
+
 
     }
 
     private fun removeColoring(view: EditText, startLine: Int, endLine: Int) {
+//        return
         val startTime = System.currentTimeMillis()
         val begin = view.layout.getLineStart(startLine)
         val end = view.layout.getLineEnd(endLine)
@@ -125,8 +133,15 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
 //                    min(lastVisibleLine + (lastColoredLine - lastVisibleLine) / 2, view.lineCount - 1))
     }
     override fun updateStyling(scrollY: Int, height: Int) {
-
+        val textSyntaxSpans = view.text.getSpans<ForegroundColorSpan>(0, view.text.length, ForegroundColorSpan::class.java)
+        for (span in textSyntaxSpans) {
+            view.text.removeSpan(span)
+        }
+        if (view.lineCount < colorWindowHeight)
+            colorWindowHeight = view.lineCount
         val (firstVisibleLine, lastVisibleLine) = getVisibleLines(view, scrollY, height)
+        colorLines(view, highlighter, firstVisibleLine, lastVisibleLine)
+        return
         if (!isRefreshNeeded(firstVisibleLine, lastVisibleLine))
             return
         val (firstBoundaryLine, lastBoundaryLine) = getColorBoundaries(firstVisibleLine, lastVisibleLine)
