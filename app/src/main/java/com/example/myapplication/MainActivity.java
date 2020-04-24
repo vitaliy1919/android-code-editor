@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private CPlusPlusHighlighter highlighter;
     private Styler styler;
     private boolean highlightCode = true;
-
+    private float prevScrollY = -1;
     public int countChar(String str, char c) {
         int count = 0;
 
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         handler = new Handler(getMainLooper());
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main_constraint);
         codeEdit = findViewById(R.id.code_editor);
         numbersView = findViewById(R.id.numbers_view);
         numbersView.initializeView(codeEdit);
@@ -203,10 +203,29 @@ public class MainActivity extends AppCompatActivity {
 //        });
         styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
         //Log.d("process", "Hello");
+        codeEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                codeEdit.setCursorVisible(true);
+
+            }
+        });
+
         verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
             Log.d("Scroll", verticalScroll.getScrollY() + "");
+            int line;
+            if (prevScrollY > verticalScroll.getScrollY())
+                line = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY()) + 2;
+            else
+                line = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight()) - 2;
+            int charNumber = codeEdit.getLayout().getLineStart(line);
+//            int endCharNumber = codeEdit.getLayout().getLineEnd(line);
+//            codeEdit.setCursorVisible(false);
+            codeEdit.setSelection(charNumber);
+//            codeEdit.setFocusableInTouchMode(true);
             if (highlightCode)
                 styler.updateStyling(verticalScroll.getScrollY(), verticalScroll.getHeight());
+            prevScrollY = verticalScroll.getScrollY();
         });
 
         codeEdit.addTextChangedListener(new TextWatcher() {
