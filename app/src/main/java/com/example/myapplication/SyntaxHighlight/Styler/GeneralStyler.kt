@@ -53,7 +53,7 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
             val tokens = highlighter.tokens
             var iterator = tokens.head
             while (iterator != null) {
-                if (iterator.data.start >= startCharacter && iterator.data.start <= endCharacter) {
+                if ((iterator.data.start >= startCharacter || iterator.data.end >= startCharacter) && iterator.data.start <= endCharacter) {
                     val data = iterator.data
                     styleToken(data)
                 }

@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CREATE_FILE = 2;
     private Uri currentlyOpenedFile = null;
     boolean word_wrap = false;
+    private LinearLayout letters;
     private ProgressBar progressBar;
     private MultiAutoCompleteTextView codeEdit;
     private NumbersView numbersView;
@@ -176,7 +178,10 @@ public class MainActivity extends AppCompatActivity {
         fastScroll = findViewById(R.id.fast_scroll);
         verticalScroll = findViewById(R.id.vertical_scroll);
         fastScroll.initialize(codeEdit, verticalScroll);
-
+        letters = findViewById(R.id.letters);
+        TextView letter = new TextView(this);
+        letter.setText("@");
+        letters.addView(letter);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
         codeEdit.setAdapter(adapter);
@@ -208,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 startHighlight  = ConverterKt.findCharBefore(s, Math.max(start - 1, 0), '\n');
-                endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
+                    endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
             }
 
             @Override
@@ -218,7 +223,10 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-
+                if (needsUpdate) {
+                    needsUpdate = false;
+                    codeEdit.getText().insert(1, "Test");
+                }
 //                    handler.post(() -> {
             long startTime = System.currentTimeMillis();
 

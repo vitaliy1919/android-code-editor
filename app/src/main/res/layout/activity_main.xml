@@ -9,66 +9,82 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:visibility="invisible"/>
-    <ScrollView
-        android:id="@+id/vertical_scroll"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        android:scrollbars="none"
-        tools:context=".MainActivity">
-
-        <LinearLayout
-            android:id="@+id/main_layout"
+        android:orientation="vertical"
+        >
+        <ScrollView
+            android:id="@+id/vertical_scroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="#303030"
-            android:layout_gravity = "top">
-            <com.example.myapplication.views.NumbersView
-                android:id="@+id/numbers_view"
-                android:background="#313335"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                >
+            android:fillViewport="true"
+            android:scrollbars="none"
+            tools:context=".MainActivity">
 
-            </com.example.myapplication.views.NumbersView>
-            <View
-                android:layout_height="match_parent"
-                android:layout_width="0.1sp"
-                android:background="@color/darkula_divider"
-                />
-            <HorizontalScrollView
-                android:id="@+id/wrap_horizontal_scroll"
+            <LinearLayout
+                android:id="@+id/main_layout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:fillViewport="true">
-
-                <MultiAutoCompleteTextView
-                    android:padding="5dp"
-                    android:freezesText="true"
-                    android:id="@+id/code_editor"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="#303030"
+                android:layout_gravity = "top">
+                <com.example.myapplication.views.NumbersView
+                    android:id="@+id/numbers_view"
+                    android:background="#313335"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:autoLink="none"
-                    android:background="#303030"
-                    android:fontFamily="@font/jetbrains_mono"
-                    android:gravity="top"
-                    android:imeOptions="flagNoExtractUi"
-                    android:inputType="text|textNoSuggestions|textMultiLine"
-                    android:minLines="5"
-                    android:scrollbars="none"
-                    android:textColor="#ABB7C5"
-                    android:textSize="12sp"
-                    android:typeface="monospace"
-                    tools:ignore="Autofill,LabelFor"
-                    tools:text="1838383" />
-            </HorizontalScrollView>
+                    android:layout_margin="5dp"
+                    >
+
+                </com.example.myapplication.views.NumbersView>
+                <View
+                    android:layout_height="match_parent"
+                    android:layout_width="0.1sp"
+                    android:background="@color/darkula_divider"
+                    />
+                <HorizontalScrollView
+                    android:id="@+id/wrap_horizontal_scroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:fillViewport="true">
+
+                    <MultiAutoCompleteTextView
+                        android:padding="5dp"
+                        android:freezesText="true"
+                        android:id="@+id/code_editor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:autoLink="none"
+                        android:background="#303030"
+                        android:fontFamily="@font/jetbrains_mono"
+                        android:gravity="top"
+                        android:imeOptions="flagNoExtractUi"
+                        android:inputType="text|textNoSuggestions|textMultiLine"
+                        android:minLines="5"
+                        android:scrollbars="none"
+                        android:textColor="#ABB7C5"
+                        android:textSize="12sp"
+                        android:typeface="monospace"
+                        tools:ignore="Autofill,LabelFor"
+                        tools:text="1838383" />
+                </HorizontalScrollView>
 
 
+            </LinearLayout>
+
+        </ScrollView>
+        <LinearLayout
+            android:id="@+id/letters"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="\@"/>
         </LinearLayout>
-
-    </ScrollView>
+    </LinearLayout>
     <com.example.myapplication.views.FastScroll
         android:id="@+id/fast_scroll"
         android:layout_width="wrap_content"
