@@ -25,6 +25,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
@@ -163,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String[] COUNTRIES = new String[] {
             "Belgium", "France", "Italy", "Germany", "Spain"
     };
+    private String symbols = "→;,.<>\"'={}&|!()+-*/[]#%^:_@?";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -179,9 +182,31 @@ public class MainActivity extends AppCompatActivity {
         verticalScroll = findViewById(R.id.vertical_scroll);
         fastScroll.initialize(codeEdit, verticalScroll);
         letters = findViewById(R.id.letters);
-        TextView letter = new TextView(this);
-        letter.setText("@");
-        letters.addView(letter);
+        for (int i = 0; i < symbols.length(); i++) {
+            TextView letter = new TextView(this);
+            int padding = (int)ConverterKt.dpToPx(5.0f, this);
+            letter.setPadding(padding, padding, padding, padding);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(padding, padding, padding, padding);
+            String letterS = Character.toString(symbols.charAt(i));
+            letter.setTextSize(ConverterKt.spToPx(10, this));
+            letter.setText(letterS);
+            letter.setTextColor(ContextCompat.getColor(this,R.color.darkula_text));
+            letter.setTypeface(ResourcesCompat.getFont(this, R.font.jetbrains_mono));
+            letter.setLayoutParams(params);
+            letter.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String text = letterS.equals("→") ? "\t" : letterS;
+                    codeEdit.getText().replace(codeEdit.getSelectionStart(), codeEdit.getSelectionEnd(), text);
+                }
+            });
+            letters.addView(letter);
+        }
+
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
         codeEdit.setAdapter(adapter);
@@ -218,10 +243,13 @@ public class MainActivity extends AppCompatActivity {
                 line = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY()) + 2;
             else
                 line = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight()) - 2;
-            int charNumber = codeEdit.getLayout().getLineStart(line);
+            if (line >0 && line < codeEdit.getLineCount()) {
+                int charNumber = codeEdit.getLayout().getLineStart(line);
 //            int endCharNumber = codeEdit.getLayout().getLineEnd(line);
 //            codeEdit.setCursorVisible(false);
-            codeEdit.setSelection(charNumber);
+
+                codeEdit.setSelection(charNumber);
+            }
 //            codeEdit.setFocusableInTouchMode(true);
             if (highlightCode)
                 styler.updateStyling(verticalScroll.getScrollY(), verticalScroll.getHeight());
