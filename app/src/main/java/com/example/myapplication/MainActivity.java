@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
     private Styler styler;
     private boolean highlightCode = true;
     private float prevScrollY = -1;
+    private boolean newDataSet = false;
+
     public int countChar(String str, char c) {
         int count = 0;
 
@@ -208,34 +210,19 @@ public class MainActivity extends AppCompatActivity {
             letters.addView(letter);
         }
 
+        codeEdit.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (newDataSet) {
+                newDataSet = false;
+                styler.updateStyling((int)prevScrollY, verticalScroll.getHeight());
+            }
+        });
+
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, COUNTRIES);
         codeEdit.setAdapter(adapter);
         codeEdit.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
-//        codeEdit.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-//            @Override
-//            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-//                //Log.d("Code editor", "Layout changed");
-//
-//                if (currentLineNumber != codeEdit.getLineCount() && shouldUpdate) {
-//                    shouldUpdate = false;
-//                    currentLineNumber = codeEdit.getLineCount();
-//                    //Log.d("Code editor", "Numbers updated"+codeEdit.getLineCount());
-////                    updateNumbersView();
-//                    numbersView.update();
-//
-//                }
-//            }
-//        });
-        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
-        //Log.d("process", "Hello");
-        codeEdit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                codeEdit.setCursorVisible(true);
 
-            }
-        });
+        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
 
         verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
             Log.d("Scroll", verticalScroll.getScrollY() + "");
@@ -266,14 +253,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 Log.d("TextBefore", start+", "+count);
-                TokenList tokens = highlighter.getTokens();
-                TokenList.TokenNode iter = tokens.getHead();
-                while (iter != null) {
-                    Log.d("T", iter.getData().getType().toString());
-                    iter = iter.getNext();
-                    if (iter == tokens.getHead())
-                        break;
-                }
+//                TokenList tokens = highlighter.getTokens();
+//                TokenList.TokenNode iter = tokens.getHead();
+//                while (iter != null) {
+//                    Log.d("T", iter.getData().getType().toString());
+//                    iter = iter.getNext();
+//                    if (iter == tokens.getHead())
+//                        break;
+//                }
 //                startHighlight  = ConverterKt.findCharBefore(s, Math.max(start - 1, 0), '\n');
 //                    endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
             }
@@ -281,16 +268,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 Log.d("TextOn", start+", "+count);
-                highlighter.update();
+                if (!newDataSet) {
+//                    newDataSet = false;
+                    highlighter.update(s, start, start + count, count - before);
+                    styler.updateStyling((int) prevScrollY, verticalScroll.getHeight());
+                }
 //                needsUpdate = highlighter.checkNeedUpdate(s, start, start+count);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (needsUpdate) {
-                    needsUpdate = false;
-                    codeEdit.getText().insert(1, "Test");
-                }
+//                if (needsUpdate) {
+//                    needsUpdate = false;
+//                    codeEdit.getText().insert(1, "Test");
+//                }
 //                    handler.post(() -> {
 
             long startTime = System.currentTimeMillis();
@@ -380,10 +371,9 @@ public class MainActivity extends AppCompatActivity {
                             final String data = writer.toString();
 
                             long difference = System.currentTimeMillis() - startTime;
+                            newDataSet = true;
                             codeEdit.setText(data);
                             highlighter.parse(codeEdit.getText());
-                            //Log.d("File read", "Set time:" + difference/ 1000.0);
-
                             progressBar.setVisibility(View.INVISIBLE);
                         }
                     });

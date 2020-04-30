@@ -69,22 +69,27 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         if (index < 0)
             index = 0
 
+        var lastIndex = end
+        while (lastIndex < s.length && s[lastIndex] != '\n')
+            lastIndex++
+        if (lastIndex >= s.length)
+            lastIndex = s.length - 1
+
         var firstChangedTokenIter = tokens.head
         while (firstChangedTokenIter != null) {
             if (firstChangedTokenIter.data.end > start)
                 break
             firstChangedTokenIter = firstChangedTokenIter.next
             if (firstChangedTokenIter == tokens.head) {
-                firstChangedTokenIter = null
                 break
             }
-//                throw Exception("Something went really wrong")
-//                break
         }
-
-        var startIndex = min(index, firstChangedTokenIter!!.data.start)
+        var firstChangedTokenStart = index + 1
+        if (firstChangedTokenIter != null)
+            firstChangedTokenStart = firstChangedTokenIter.data.start
+        var startIndex = min(index, firstChangedTokenStart)
         val newTokenList = TokenList()
-        while (startIndex < end) {
+        while (startIndex < lastIndex) {
             startIndex = parseFromPosition(newTokenList, s, startIndex)
         }
         if (newTokenList.tail == null) {
@@ -93,7 +98,28 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         var iter = firstChangedTokenIter
         while (iter != null) {
             if (iter.data.start > startIndex)
+                break
+            iter = iter.next
+            if (iter == tokens.head) {
+                iter = tokens.tail
+                break
+            }
         }
+        val firstNonChangedToken = firstChangedTokenIter?.prev
+        val firstTokenAfterRemoved = iter?.next
+        if (firstChangedTokenIter != null)
+            tokens.removeNodes(firstChangedTokenIter, iter!!)
+
+        tokens.insertTokenListAfter(firstNonChangedToken, newTokenList)
+
+        var offsetIter  = firstTokenAfterRemoved
+        while (offsetIter != null) {
+            offsetIter.data.end += offset
+            offsetIter = offsetIter.next
+            if (offsetIter == tokens.head)
+                break
+        }
+
 
     }
 

@@ -35,7 +35,12 @@ class TokenList {
         head?.next = tokenNode
     }
 
-    fun insertTokenListAfter(node: TokenNode, list: TokenList) {
+    fun insertTokenListAfter(node: TokenNode?, list: TokenList) {
+        if (node == null) {
+            head = list.head
+            tail = list.tail
+            return
+        }
         if (head == null) {
             head = list.head
             tail = list.tail
@@ -53,6 +58,15 @@ class TokenList {
     }
 
     fun removeNodes(firstNode: TokenNode, lastNode: TokenNode) {
+//        if (firstNode == null) {
+//            if (lastNode == null) {
+//                head = null
+//                tail = null
+//                return
+//            }
+//            head = lastNode.next
+//            return
+//        }
         if (firstNode == head) {
             if (lastNode == tail) {
                 head = null
@@ -68,6 +82,7 @@ class TokenList {
             head?.prev = tail
             return
         }
+
         firstNode.prev = lastNode.next
         lastNode.next?.prev = firstNode.prev
     }
