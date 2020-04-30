@@ -1,11 +1,56 @@
 package com.example.myapplication.SyntaxHighlight.Tokens
 
-class TokenList {
-    data class TokenNode(var data: Token, var next: TokenNode? = null, var prev: TokenNode? = null )
+import java.util.*
+
+class TokenList: Collection<Token> {
+    override val size: Int
+        get() = 1000
+
+    override fun contains(element: Token): Boolean {
+        return true
+//        TODO("Not yet implemented")
+    }
+
+    override fun containsAll(elements: Collection<Token>): Boolean {
+        return true
+//        TODO("Not yet implemented")
+    }
+
+    override fun isEmpty(): Boolean {
+        return head == null
+    }
+
+    override fun iterator(): Iterator<Token> {
+        return TokenListIterator(this, head)
+    }
+
+    data class TokenNode(var data: Token, var next: TokenNode? = null, var prev: TokenNode? = null ) {
+        override fun toString(): String {
+            return "${data.toString()}"
+        }
+    }
+    class TokenListIterator(val tokenList: TokenList, var rawNode: TokenNode?): Iterator<Token> {
+        var oneListItem = false
+        init {
+            oneListItem = tokenList.head == tokenList.tail
+        }
+        override fun hasNext(): Boolean {
+            return oneListItem || (rawNode != null && rawNode?.next != tokenList.head)
+        }
+
+        override fun next(): Token {
+            oneListItem = false
+            val data = rawNode!!.data
+            rawNode = rawNode?.next
+            return data
+        }
+    }
     var head: TokenNode? = null
     var tail: TokenNode? = null
+    var listSize = 0
 
     fun insertTail(token: Token) {
+        listSize++
         val tokenNode = TokenNode(token)
         if (head == null) {
             tokenNode.next = tokenNode
@@ -27,6 +72,7 @@ class TokenList {
     }
 
     fun insertAfterHead(token: Token) {
+        listSize++
         if (head == null || head == tail ) {
            insertTail(token)
             return
@@ -36,6 +82,7 @@ class TokenList {
     }
 
     fun insertTokenListAfter(node: TokenNode?, list: TokenList) {
+
         if (node == null) {
             head = list.head
             tail = list.tail

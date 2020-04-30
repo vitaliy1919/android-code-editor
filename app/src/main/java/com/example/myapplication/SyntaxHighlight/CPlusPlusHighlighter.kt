@@ -89,7 +89,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             firstChangedTokenStart = firstChangedTokenIter.data.start
         var startIndex = min(index, firstChangedTokenStart)
         val newTokenList = TokenList()
-        while (startIndex < lastIndex) {
+        while (startIndex <= lastIndex) {
             startIndex = parseFromPosition(newTokenList, s, startIndex)
         }
         if (newTokenList.tail == null) {
@@ -105,8 +105,8 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                 break
             }
         }
-        val firstNonChangedToken = firstChangedTokenIter?.prev
-        val firstTokenAfterRemoved = iter?.next
+        val firstNonChangedToken = if (firstChangedTokenIter != tokens.head) firstChangedTokenIter?.prev else null
+        val firstTokenAfterRemoved = if (iter != tokens.tail) iter?.next else null
         if (firstChangedTokenIter != null)
             tokens.removeNodes(firstChangedTokenIter, iter!!)
 
