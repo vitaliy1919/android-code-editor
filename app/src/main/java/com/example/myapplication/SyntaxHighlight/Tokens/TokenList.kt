@@ -34,6 +34,43 @@ class TokenList {
         val tokenNode = TokenNode(token, head, head?.next)
         head?.next = tokenNode
     }
+
+    fun insertTokenListAfter(node: TokenNode, list: TokenList) {
+        if (head == null) {
+            head = list.head
+            tail = list.tail
+            return
+        } else if (head == tail) {
+            head?.next = list.head
+            tail = list.tail
+            tail?.next = head
+            return
+        }
+        list.tail = node.next
+        node.next = list.head
+        if (node == tail)
+            tail = list.tail
+    }
+
+    fun removeNodes(firstNode: TokenNode, lastNode: TokenNode) {
+        if (firstNode == head) {
+            if (lastNode == tail) {
+                head = null
+                tail = null
+                return
+            }
+            head = lastNode.next
+            head?.prev = tail
+            tail?.next = head
+        } else if (lastNode == tail) {
+            tail = firstNode.prev
+            tail?.next = head
+            head?.prev = tail
+            return
+        }
+        firstNode.prev = lastNode.next
+        lastNode.next?.prev = firstNode.prev
+    }
     fun insertAfter(node: TokenNode, token: Token) {
 
     }

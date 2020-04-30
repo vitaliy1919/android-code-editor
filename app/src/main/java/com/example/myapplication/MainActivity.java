@@ -32,6 +32,7 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
+import com.example.myapplication.SyntaxHighlight.Tokens.TokenList;
 import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
@@ -239,11 +240,16 @@ public class MainActivity extends AppCompatActivity {
         verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
             Log.d("Scroll", verticalScroll.getScrollY() + "");
             int line;
-            if (prevScrollY > verticalScroll.getScrollY())
-                line = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY()) + 2;
-            else
-                line = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight()) - 2;
-            if (line >0 && line < codeEdit.getLineCount()) {
+            int startLine = codeEdit.getLayout().getLineForVertical((int) verticalScroll.getScrollY());
+            int endLine = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight());
+            int cursorLine = codeEdit.getLayout().getLineForOffset(codeEdit.getSelectionStart());
+            if (prevScrollY > verticalScroll.getScrollY()) {
+//                if (cursorLine > endLine - 2)
+                    line = startLine + 2;
+//                else line = -1;
+            } else
+                line = endLine - 2;
+            if (line > 0 && line < codeEdit.getLineCount()) {
                 int charNumber = codeEdit.getLayout().getLineStart(line);
 //            int endCharNumber = codeEdit.getLayout().getLineEnd(line);
 //            codeEdit.setCursorVisible(false);
@@ -259,12 +265,23 @@ public class MainActivity extends AppCompatActivity {
         codeEdit.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                startHighlight  = ConverterKt.findCharBefore(s, Math.max(start - 1, 0), '\n');
-                    endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
+                Log.d("TextBefore", start+", "+count);
+                TokenList tokens = highlighter.getTokens();
+                TokenList.TokenNode iter = tokens.getHead();
+                while (iter != null) {
+                    Log.d("T", iter.getData().getType().toString());
+                    iter = iter.getNext();
+                    if (iter == tokens.getHead())
+                        break;
+                }
+//                startHighlight  = ConverterKt.findCharBefore(s, Math.max(start - 1, 0), '\n');
+//                    endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
+                Log.d("TextOn", start+", "+count);
+                highlighter.update();
 //                needsUpdate = highlighter.checkNeedUpdate(s, start, start+count);
             }
 
@@ -275,6 +292,7 @@ public class MainActivity extends AppCompatActivity {
                     codeEdit.getText().insert(1, "Test");
                 }
 //                    handler.post(() -> {
+
             long startTime = System.currentTimeMillis();
 
 //            Object spansToRemove[] = s.getSpans(startHighlight, endHighlight, Object.class);

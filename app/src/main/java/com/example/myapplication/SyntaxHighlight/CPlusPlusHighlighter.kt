@@ -2,12 +2,14 @@ package com.example.myapplication.SyntaxHighlight
 
 import android.content.Context
 import android.util.Log
-import com.example.myapplication.R
 import com.example.myapplication.SyntaxHighlight.Tokens.Token
+import com.example.myapplication.SyntaxHighlight.Tokens.TokenList
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenType
 import com.example.myapplication.Trie
+import java.lang.Exception
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import kotlin.math.min
 
 
 fun CharSequence.charAtSafe(i: Int):Char {
@@ -19,7 +21,7 @@ fun CharSequence.charAtSafe(i: Int):Char {
 }
 class ParseResult(var token: Token? = null, var position: Int = -1)
 class CPlusPlusHighlighter(val context: Context):Highlighter() {
-    fun parseFromPosition(s: CharSequence, index: Int) : Int {
+    fun parseFromPosition(tokenList: TokenList,s: CharSequence, index: Int) : Int {
         var parseResult: ParseResult = ParseResult()
         var position = index
         if (parentheses.indexOf(s[position]) != -1) {
@@ -46,7 +48,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             parseResult = parseWithRegex(digitsPattern, position, s, TokenType.NUMBER)
 
         if (parseResult.token != null) {
-            tokens.insertTail(parseResult.token!!)
+            tokenList.insertTail(parseResult.token!!)
             position = parseResult.position
         } else {
             position++
@@ -56,12 +58,43 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
     override fun parse(s: CharSequence) {
         var position = 0;
         while (position < s.length) {
-            position = parseFromPosition(s, position)
+            position = parseFromPosition(tokens, s, position)
         }
     }
 
-    override fun update(s: CharSequence, start: Int, end: Int) {
-//        TODO("Not yet implemented")
+    override fun update(s: CharSequence, start: Int, end: Int, offset: Int) {
+        var index = start
+        while (index >= 0 && s[index] != '\n')
+            index--;
+        if (index < 0)
+            index = 0
+
+        var firstChangedTokenIter = tokens.head
+        while (firstChangedTokenIter != null) {
+            if (firstChangedTokenIter.data.end > start)
+                break
+            firstChangedTokenIter = firstChangedTokenIter.next
+            if (firstChangedTokenIter == tokens.head) {
+                firstChangedTokenIter = null
+                break
+            }
+//                throw Exception("Something went really wrong")
+//                break
+        }
+
+        var startIndex = min(index, firstChangedTokenIter!!.data.start)
+        val newTokenList = TokenList()
+        while (startIndex < end) {
+            startIndex = parseFromPosition(newTokenList, s, startIndex)
+        }
+        if (newTokenList.tail == null) {
+            throw Exception("highlighter.update::tail is null")
+        }
+        var iter = firstChangedTokenIter
+        while (iter != null) {
+            if (iter.data.start > startIndex)
+        }
+
     }
 
     private val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
