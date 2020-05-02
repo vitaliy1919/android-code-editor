@@ -1,5 +1,6 @@
 package com.example.myapplication.SyntaxHighlight.Tokens
 
+import android.util.Log
 import java.util.*
 
 class TokenList: Collection<Token> {
@@ -24,6 +25,11 @@ class TokenList: Collection<Token> {
         return TokenListIterator(this, head)
     }
 
+    fun clear() {
+        head = null
+        tail = null
+    }
+
     data class TokenNode(var data: Token, var next: TokenNode? = null, var prev: TokenNode? = null ) {
         override fun toString(): String {
             return "${data.toString()}"
@@ -31,15 +37,14 @@ class TokenList: Collection<Token> {
     }
     class TokenListIterator(val tokenList: TokenList, var rawNode: TokenNode?): Iterator<Token> {
         var oneListItem = false
-        init {
-            oneListItem = tokenList.head == tokenList.tail
-        }
+        var firstStep = true
+
         override fun hasNext(): Boolean {
-            return oneListItem || (rawNode != null && rawNode?.next != tokenList.head)
+            return firstStep || (rawNode != null && rawNode != tokenList.head)
         }
 
         override fun next(): Token {
-            oneListItem = false
+            firstStep = false
             val data = rawNode!!.data
             rawNode = rawNode?.next
             return data
@@ -50,7 +55,6 @@ class TokenList: Collection<Token> {
     var listSize = 0
 
     fun insertTail(token: Token) {
-        listSize++
         val tokenNode = TokenNode(token)
         if (head == null) {
             tokenNode.next = tokenNode
@@ -59,10 +63,11 @@ class TokenList: Collection<Token> {
             tail = tokenNode
             return
         } else if (head == tail) {
-            tokenNode.next = head
-            tokenNode.prev = head
-            head?.next = tokenNode
             tail = tokenNode
+            tail?.next = head
+            tail?.prev = head
+            head?.next = tail
+            head?.prev = tail
             return
         }
         tail?.next = tokenNode
@@ -82,56 +87,77 @@ class TokenList: Collection<Token> {
     }
 
     fun insertTokenListAfter(node: TokenNode?, list: TokenList) {
+        Log.d("TokenList", "insertList")
 
-        if (node == null) {
-            head = list.head
-            tail = list.tail
-            return
-        }
         if (head == null) {
             head = list.head
             tail = list.tail
+            check()
             return
-        } else if (head == tail) {
-            head?.next = list.head
-            tail = list.tail
-            tail?.next = head
+        } 
+        if (node == null) {
+            head!!.prev = list.tail
+            list.tail!!.next = head
+            head = list.head
+            head!!.prev = tail
+            tail!!.next = head
+            check()
             return
         }
-        list.tail = node.next
-        node.next = list.head
-        if (node == tail)
+        if (node == tail) {
+            list.head!!.prev = tail
+            tail!!.next = list.head
             tail = list.tail
+            tail!!.next = head
+            head!!.prev = tail
+            check()
+            return
+        }
+        node.next!!.prev = list.tail
+        list.tail!!.next = node.next
+        node.next = list.head
+        list.head!!.prev = node
+        check()
+    }
+    fun check() {
+        var iter = head
+        while (iter != null) {
+            if (iter != iter.next?.prev)
+                Log.d("TokenList", "Trouble")
+            iter = iter.next
+            if (iter == head)
+                break
+        }
     }
 
     fun removeNodes(firstNode: TokenNode, lastNode: TokenNode) {
-//        if (firstNode == null) {
-//            if (lastNode == null) {
-//                head = null
-//                tail = null
-//                return
-//            }
-//            head = lastNode.next
-//            return
-//        }
+        Log.d("TokenList", "removeNodes")
         if (firstNode == head) {
             if (lastNode == tail) {
                 head = null
                 tail = null
+                check()
                 return
             }
             head = lastNode.next
             head?.prev = tail
             tail?.next = head
+            check()
+            return
         } else if (lastNode == tail) {
             tail = firstNode.prev
             tail?.next = head
             head?.prev = tail
+            check()
             return
         }
+        firstNode.next = lastNode.next
+        lastNode.prev = firstNode.prev
 
-        firstNode.prev = lastNode.next
-        lastNode.next?.prev = firstNode.prev
+//        firstNode.prev = lastNode.next
+//        lastNode.next?.prev = firstNode.prev
+        check()
+
     }
     fun insertAfter(node: TokenNode, token: Token) {
 

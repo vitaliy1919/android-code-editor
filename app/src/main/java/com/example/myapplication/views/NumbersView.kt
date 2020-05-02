@@ -69,14 +69,14 @@ class NumbersView : View {
 //        requestLayout();
     }
     override fun onDraw(canvas: Canvas?) {
-        Log.d("NumbersView", "Repainted!")
+        // Log.d("NumbersView", "Repainted!")
         super.onDraw(canvas)
         if (codeEdit?.layout != null) {
             val layout = codeEdit!!.layout
             val lineCount = codeEdit!!.lineCount
             val text = codeEdit!!.text
             val maxDigits = countDigits(lineCount + 1)
-//            Log.d("padding", "$paddingLeft $paddingRight $paddingTop")
+//            // Log.d("padding", "$paddingLeft $paddingRight $paddingTop")
             val maxWidth = symbolWidth*maxDigits
             viewWidth = maxWidth.toInt()+1
 //            setPadding(maxWidth.toInt(), 0, 0, 0)

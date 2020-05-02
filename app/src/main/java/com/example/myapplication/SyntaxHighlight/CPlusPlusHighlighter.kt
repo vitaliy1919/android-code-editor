@@ -6,7 +6,6 @@ import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenList
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenType
 import com.example.myapplication.Trie
-import java.lang.Exception
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.math.min
@@ -63,57 +62,70 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
     }
 
     override fun update(s: CharSequence, start: Int, end: Int, offset: Int) {
-        var index = start
-        while (index >= 0 && s[index] != '\n')
-            index--;
-        if (index < 0)
-            index = 0
+        if (s.isEmpty()) {
+            tokens.clear()
+            return
+        }
+        var updateStartIndex = start
+        if (updateStartIndex >= s.length)
+            updateStartIndex = s.length - 1
+        while (updateStartIndex >= 0 && updateStartIndex < s.length && s[updateStartIndex] != '\n')
+            updateStartIndex--;
+        if (updateStartIndex < 0)
+            updateStartIndex = 0
+        else if (updateStartIndex >= s.length)
+            updateStartIndex = s.length - 1
 
-        var lastIndex = end
-        while (lastIndex < s.length && s[lastIndex] != '\n')
-            lastIndex++
-        if (lastIndex >= s.length)
-            lastIndex = s.length - 1
+        var updateEndIndex = end
+        while (updateEndIndex < s.length && s[updateEndIndex] != '\n')
+            updateEndIndex++
+        if (updateEndIndex >= s.length)
+            updateEndIndex = s.length - 1
 
         var firstChangedTokenIter = tokens.head
         while (firstChangedTokenIter != null) {
-            if (firstChangedTokenIter.data.end > start)
+            if (firstChangedTokenIter.data.end > updateStartIndex)
                 break
             firstChangedTokenIter = firstChangedTokenIter.next
             if (firstChangedTokenIter == tokens.head) {
                 break
             }
         }
-        var firstChangedTokenStart = index + 1
+        var firstChangedTokenStart = updateStartIndex + 1
         if (firstChangedTokenIter != null)
             firstChangedTokenStart = firstChangedTokenIter.data.start
-        var startIndex = min(index, firstChangedTokenStart)
+
+        var startIndex = min(updateStartIndex, firstChangedTokenStart)
+
         val newTokenList = TokenList()
-        while (startIndex <= lastIndex) {
+        while (startIndex <= updateEndIndex) {
             startIndex = parseFromPosition(newTokenList, s, startIndex)
         }
-        if (newTokenList.tail == null) {
-            throw Exception("highlighter.update::tail is null")
-        }
-        var iter = firstChangedTokenIter
-        while (iter != null) {
-            if (iter.data.start > startIndex)
+
+        val lastTokenEnd = startIndex
+        var lastChangedTokenIter = firstChangedTokenIter
+        while (lastChangedTokenIter != null) {
+            if (lastChangedTokenIter.data.start > lastTokenEnd)
                 break
-            iter = iter.next
-            if (iter == tokens.head) {
-                iter = tokens.tail
+            lastChangedTokenIter = lastChangedTokenIter.next
+            if (lastChangedTokenIter == tokens.head) {
+                lastChangedTokenIter = tokens.tail
                 break
             }
         }
         val firstNonChangedToken = if (firstChangedTokenIter != tokens.head) firstChangedTokenIter?.prev else null
-        val firstTokenAfterRemoved = if (iter != tokens.tail) iter?.next else null
-        if (firstChangedTokenIter != null)
-            tokens.removeNodes(firstChangedTokenIter, iter!!)
+        val firstTokenAfterRemoved = if (lastChangedTokenIter != tokens.tail) lastChangedTokenIter?.next else null
 
-        tokens.insertTokenListAfter(firstNonChangedToken, newTokenList)
+        if (!tokens.isEmpty())
+            tokens.removeNodes(firstChangedTokenIter!!, lastChangedTokenIter!!)
+
+         if (!newTokenList.isEmpty())
+            tokens.insertTokenListAfter(firstNonChangedToken, newTokenList)
 
         var offsetIter  = firstTokenAfterRemoved
         while (offsetIter != null) {
+            offsetIter.data.start += offset
+
             offsetIter.data.end += offset
             offsetIter = offsetIter.next
             if (offsetIter == tokens.head)
