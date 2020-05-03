@@ -2,8 +2,28 @@ package com.example.myapplication.SyntaxHighlight.Tokens
 
 import android.util.Log
 import java.util.*
+import kotlin.NoSuchElementException
 
 class TokenList: Collection<Token> {
+    override fun toString(): String {
+        val iter = iterator()
+        var str = "["
+        while (iter.hasNext()) {
+            str += iter.next().toString() + ", "
+        }
+        str += "]"
+        return str
+    }
+    fun toString(sequence: CharSequence): String {
+        val iter = iterator()
+        var str = "[\n"
+        while (iter.hasNext()) {
+            str += iter.next().toString(sequence) + "\n"
+        }
+        str += "]"
+        return str
+    }
+
     override val size: Int
         get() = 1000
 
@@ -21,8 +41,12 @@ class TokenList: Collection<Token> {
         return head == null
     }
 
-    override fun iterator(): Iterator<Token> {
+    override fun iterator(): TokenListIterator {
         return TokenListIterator(this, head)
+    }
+
+    fun iterator(node: TokenNode?): TokenListIterator {
+        return TokenListIterator(this, node)
     }
 
     fun clear() {
@@ -39,11 +63,20 @@ class TokenList: Collection<Token> {
         var oneListItem = false
         var firstStep = true
 
+        init {
+            firstStep = (rawNode == tokenList.head)
+        }
+        fun getNode(): TokenNode? {
+            return rawNode
+        }
         override fun hasNext(): Boolean {
-            return firstStep || (rawNode != null && rawNode != tokenList.head)
+            return rawNode != null && (firstStep || rawNode != tokenList.head)
         }
 
+
         override fun next(): Token {
+            if (!hasNext())
+                throw NoSuchElementException("No element")
             firstStep = false
             val data = rawNode!!.data
             rawNode = rawNode?.next
@@ -151,8 +184,8 @@ class TokenList: Collection<Token> {
             check()
             return
         }
-        firstNode.next = lastNode.next
-        lastNode.prev = firstNode.prev
+        firstNode.prev?.next = lastNode.next
+        lastNode.next?.prev = firstNode.prev
 
 //        firstNode.prev = lastNode.next
 //        lastNode.next?.prev = firstNode.prev

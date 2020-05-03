@@ -6,6 +6,8 @@ import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenList
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenType
 import com.example.myapplication.Trie
+import com.example.myapplication.utils.InterSectionResult
+import com.example.myapplication.utils.intersect
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 import kotlin.math.min
@@ -55,6 +57,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         return position
     }
     override fun parse(s: CharSequence) {
+        tokens.clear()
         var position = 0;
         while (position < s.length) {
             position = parseFromPosition(tokens, s, position)
@@ -66,9 +69,11 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             tokens.clear()
             return
         }
-        var updateStartIndex = start
-        if (updateStartIndex >= s.length)
-            updateStartIndex = s.length - 1
+        var updateStartIndex = start - 1
+        var updateEndIndex = end
+//        if (start == end) {
+//            updateEndIndex = start - 1
+//        }
         while (updateStartIndex >= 0 && updateStartIndex < s.length && s[updateStartIndex] != '\n')
             updateStartIndex--;
         if (updateStartIndex < 0)
@@ -76,21 +81,33 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         else if (updateStartIndex >= s.length)
             updateStartIndex = s.length - 1
 
-        var updateEndIndex = end
         while (updateEndIndex < s.length && s[updateEndIndex] != '\n')
             updateEndIndex++
         if (updateEndIndex >= s.length)
             updateEndIndex = s.length - 1
 
-        var firstChangedTokenIter = tokens.head
-        while (firstChangedTokenIter != null) {
-            if (firstChangedTokenIter.data.end > updateStartIndex)
+
+        var firstChangedTokenIter: TokenList.TokenNode? = null
+        var beforeFirstChangedTokenIter: TokenList.TokenNode? = null
+        var iter = tokens.iterator()
+        var firstTokenToOffset: TokenList.TokenNode? = null
+        while (iter.hasNext()) {
+            val curNode = iter.getNode()
+            val data = iter.next()
+            val interSectionResult = intersect(data.start, data.end, updateStartIndex, updateEndIndex - offset + 1)
+            if (interSectionResult == InterSectionResult.INTERSECTS) {
+                firstChangedTokenIter = curNode
                 break
-            firstChangedTokenIter = firstChangedTokenIter.next
-            if (firstChangedTokenIter == tokens.head) {
+            }
+
+            if (interSectionResult == InterSectionResult.OUTSIDE_LEFT)
+                beforeFirstChangedTokenIter = curNode
+            if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
+                firstTokenToOffset = curNode
                 break
             }
         }
+
         var firstChangedTokenStart = updateStartIndex + 1
         if (firstChangedTokenIter != null)
             firstChangedTokenStart = firstChangedTokenIter.data.start
@@ -103,35 +120,36 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         }
 
         val lastTokenEnd = startIndex
-        var lastChangedTokenIter = firstChangedTokenIter
-        while (lastChangedTokenIter != null) {
-            if (lastChangedTokenIter.data.start > lastTokenEnd)
-                break
-            lastChangedTokenIter = lastChangedTokenIter.next
-            if (lastChangedTokenIter == tokens.head) {
-                lastChangedTokenIter = tokens.tail
+        var lastChangedTokenIter:TokenList.TokenNode? = firstChangedTokenIter
+
+        while (firstTokenToOffset == null && iter.hasNext()) {
+            val curNode = iter.getNode()
+            val data = iter.next()
+            val interSectionResult = intersect(data.start, data.end, updateStartIndex, lastTokenEnd - offset)
+
+            if (interSectionResult == InterSectionResult.INTERSECTS) {
+                lastChangedTokenIter = curNode
+            }
+            if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
+                firstTokenToOffset = curNode
                 break
             }
         }
-        val firstNonChangedToken = if (firstChangedTokenIter != tokens.head) firstChangedTokenIter?.prev else null
-        val firstTokenAfterRemoved = if (lastChangedTokenIter != tokens.tail) lastChangedTokenIter?.next else null
 
-        if (!tokens.isEmpty())
-            tokens.removeNodes(firstChangedTokenIter!!, lastChangedTokenIter!!)
+        if (!tokens.isEmpty() && firstChangedTokenIter != null && lastChangedTokenIter != null)
+            tokens.removeNodes(firstChangedTokenIter, lastChangedTokenIter)
 
          if (!newTokenList.isEmpty())
-            tokens.insertTokenListAfter(firstNonChangedToken, newTokenList)
+            tokens.insertTokenListAfter(beforeFirstChangedTokenIter, newTokenList)
 
-        var offsetIter  = firstTokenAfterRemoved
-        while (offsetIter != null) {
-            offsetIter.data.start += offset
-
-            offsetIter.data.end += offset
-            offsetIter = offsetIter.next
-            if (offsetIter == tokens.head)
-                break
+        val offsetUpdateIter = tokens.iterator(firstTokenToOffset)
+        while (offsetUpdateIter.hasNext()) {
+//            val curNode = iter.getNode()
+            val data = offsetUpdateIter.next()
+            data.start += offset
+            data.end += offset
         }
-
+        Log.d("TokenList", tokens.toString(s))
 
     }
 

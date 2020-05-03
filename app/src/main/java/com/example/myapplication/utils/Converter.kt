@@ -5,6 +5,17 @@ import android.util.TypedValue
 import kotlin.math.max
 import kotlin.math.min
 
+enum class InterSectionResult {
+    INTERSECTS, OUTSIDE_LEFT, OUTSIDE_RIGHT
+}
+
+fun intersect(segmentAStart: Int, segmentAEnd: Int, segmentBStart: Int, segmentBEnd: Int): InterSectionResult {
+    if (segmentAEnd <= segmentBStart)
+        return InterSectionResult.OUTSIDE_LEFT
+    if (segmentBEnd <= segmentAStart)
+        return InterSectionResult.OUTSIDE_RIGHT
+    return InterSectionResult.INTERSECTS
+}
 
 fun spToPx(sp: Float, context: Context): Float {
     return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, context.resources.displayMetrics)
