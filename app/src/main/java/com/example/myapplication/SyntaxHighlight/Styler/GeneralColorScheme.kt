@@ -15,6 +15,7 @@ class GeneralColorScheme : ColorScheme {
             TokenType.BRACKETS -> R.color.darkula_bracket
             TokenType.PREPROCESSOR -> R.color.darkula_preprocessor
             TokenType.STRING_LITERAL -> R.color.darkula_string
+            TokenType.ERROR -> R.color.darkula_error
         }
     }
 }

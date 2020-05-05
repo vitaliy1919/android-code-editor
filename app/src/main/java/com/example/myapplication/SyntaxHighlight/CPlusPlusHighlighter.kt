@@ -168,98 +168,6 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 //        Log.d("TokenList", toString(tokens))
 
     }
-//    override fun update(s: CharSequence, start: Int, end: Int, offset: Int) {
-//        var startTime = System.currentTimeMillis()
-//        if (s.isEmpty()) {
-//            tokens.clear()
-//            return
-//        }
-//        var updateStartIndex = start - 1
-//        var updateEndIndex = end
-////        if (start == end) {
-////            updateEndIndex = start - 1
-////        }
-//        while (updateStartIndex >= 0 && updateStartIndex < s.length && s[updateStartIndex] != '\n')
-//            updateStartIndex--;
-//        if (updateStartIndex < 0)
-//            updateStartIndex = 0
-//        else if (updateStartIndex >= s.length)
-//            updateStartIndex = s.length - 1
-//
-//        while (updateEndIndex < s.length && s[updateEndIndex] != '\n')
-//            updateEndIndex++
-//        if (updateEndIndex >= s.length)
-//            updateEndIndex = s.length - 1
-//
-//
-//        var firstChangedTokenIter: TokenList.TokenNode? = null
-//        var beforeFirstChangedTokenIter: TokenList.TokenNode? = null
-//        var iter = tokens.iterator()
-//        var firstTokenToOffset: TokenList.TokenNode? = null
-//        while (iter.hasNext()) {
-//            val curNode = iter.getNode()
-//            val data = iter.next()
-//            val interSectionResult = intersect(data.start, data.end, updateStartIndex, updateEndIndex - offset + 1)
-//            if (interSectionResult == InterSectionResult.INTERSECTS) {
-//                firstChangedTokenIter = curNode
-//                break
-//            }
-//
-//            if (interSectionResult == InterSectionResult.OUTSIDE_LEFT)
-//                beforeFirstChangedTokenIter = curNode
-//            if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
-//                firstTokenToOffset = curNode
-//                break
-//            }
-//        }
-//
-//        var firstChangedTokenStart = updateStartIndex + 1
-//        if (firstChangedTokenIter != null)
-//            firstChangedTokenStart = firstChangedTokenIter.data.start
-//
-//        var startIndex = min(updateStartIndex, firstChangedTokenStart)
-//
-//        val newTokenList = TokenList()
-//        while (startIndex <= updateEndIndex) {
-//            startIndex = parseFromPosition(newTokenList, s, startIndex)
-//        }
-//
-//        val lastTokenEnd = startIndex
-//        var lastChangedTokenIter:TokenList.TokenNode? = firstChangedTokenIter
-//
-//        while (firstTokenToOffset == null && iter.hasNext()) {
-//            val curNode = iter.getNode()
-//            val data = iter.next()
-//            val interSectionResult = intersect(data.start, data.end, updateStartIndex, lastTokenEnd - offset)
-//
-//            if (interSectionResult == InterSectionResult.INTERSECTS) {
-//                lastChangedTokenIter = curNode
-//            }
-//            if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
-//                firstTokenToOffset = curNode
-//                break
-//            }
-//        }
-//
-//        if (!tokens.isEmpty() && firstChangedTokenIter != null && lastChangedTokenIter != null)
-//            tokens.removeNodes(firstChangedTokenIter, lastChangedTokenIter)
-//
-//         if (!newTokenList.isEmpty())
-//            tokens.insertTokenListAfter(beforeFirstChangedTokenIter, newTokenList)
-//
-//        var offsetStartTime = System.currentTimeMillis()
-//        val offsetUpdateIter = tokens.iterator(firstTokenToOffset)
-//        while (offsetUpdateIter.hasNext()) {
-////            val curNode = iter.getNode()
-//            val data = offsetUpdateIter.next()
-//            data.start += offset
-//            data.end += offset
-//        }
-//        Log.d("Update", "Offset shift: ${(System.currentTimeMillis() - offsetStartTime) / 1000.0}s")
-//        Log.d("Update", "Update took: ${(System.currentTimeMillis() - startTime) / 1000.0}s")
-////        Log.d("TokenList", tokens.toString(s))
-//
-//    }
 
     private val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
     private val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
@@ -416,41 +324,6 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         return false
     }
 
-//    fun hightliht(s: CharSequence, start: Int, end: Int): Int {
-//        val startTime = System.currentTimeMillis()
-//        var position = start;
-//        while (position < end && position < s.length) {
-//            if (parentheses.indexOf(s[position]) != -1) {
-//                addToken(s, TokenType.BRACKETS, position, position+1)
-//                position++
-//            } else if (isIdentifier(position, s)){
-//                val match = reservedWordsTrie.match(s, position)
-//                if (match == -1)
-//                    position = parseIdentifier(position, s)
-//                else {
-//                    addToken(s, TokenType.KEYWORD, position, match)
-//                    position = match;
-//                }
-//            } else if (isComment(position, s))
-//                position = parseComment(position, s)
-//            else if (isPreProcessor(position, s))
-//                position = parsePreProcessor(position, s)
-//            else if (operators.indexOf(s[position]) != -1) {
-//                addToken(s, TokenType.OPERATOR, position, position+1)
-//                position++
-//            }  else if (isStringLiteral(position, s))
-//                position = parseStringLiteral(position, s)
-//            else if (isNumber(position, s))
-//                position = parseWithRegex(digitsPattern, position, s, R.color.darkula_number)
-//            else
-//                position++
-//        }
-//        val end = System.currentTimeMillis()
-//        Log.d("Hightling duration",((end - startTime) / 1000.0).toString())
-//        return position
-//
-//    }
-
     private fun isPreProcessor(position: Int, s: CharSequence):Boolean {
         return s[position] =='#'
     }
@@ -499,7 +372,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                 }
                 index++
             }
-            return ParseResult(null, index)
+            return ParseResult(Token(TokenType.ERROR, s, position, index), index)
         } else {
             index++;
             while (index < s.length && s[index] != '\n')

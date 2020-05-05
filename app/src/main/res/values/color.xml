@@ -32,5 +32,6 @@
     <color name="darkula_string">#6E875A</color>
     <color name="darkula_comment">#66747B</color>
     <color name="darkula_number">#6897BB</color>
+    <color name="darkula_error">#BC3F3C</color>
 <!--    <color name="d">#EC7600</color>-->
 </resources>
