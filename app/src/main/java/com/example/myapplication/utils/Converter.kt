@@ -2,6 +2,7 @@ package com.example.myapplication.utils
 
 import android.content.Context
 import android.util.TypedValue
+import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import kotlin.math.max
 import kotlin.math.min
 
@@ -24,6 +25,14 @@ fun dpToPx(sp: Float, context: Context): Float {
     return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, sp, context.resources.displayMetrics)
 }
 
+fun toString(a: ArrayList<Token>):String {
+    var s = "[\n"
+    for (i in a) {
+        s += i.toString() + "\n"
+    }
+    s += "]"
+    return s
+}
 fun findCharBefore(s: CharSequence, index: Int, c: Char): Int {
     if (s.isEmpty())
         return 0

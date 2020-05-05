@@ -51,16 +51,16 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
             val startCharacter = view.layout.getLineStart(firstVisibleLine)
             val endCharacter = view.layout.getLineEnd(lastVisibleLine)
             val tokens = highlighter.tokens
-            var iterator = tokens.head
-            while (iterator != null) {
-                if ((iterator.data.start >= startCharacter || iterator.data.end >= startCharacter) && iterator.data.start <= endCharacter) {
-                    val data = iterator.data
+            var iterator = tokens.iterator()
+            while (iterator.hasNext()) {
+                val data = iterator.next()
+                if ((data.start >= startCharacter || data.end >= startCharacter) && data.start <= endCharacter) {
                     styleToken(data)
                 }
 
-                iterator = iterator.next
-                if (iterator == tokens.head)
-                    break
+//                iterator = iterator.next
+//                if (iterator == tokens.head)
+//                    break
             }
             Log.d("Coloring","${((System.currentTimeMillis() - startTime) / 1000.0).toString()}s. ${lastVisibleLine - firstVisibleLine} colored")
 

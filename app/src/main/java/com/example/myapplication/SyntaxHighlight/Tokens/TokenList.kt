@@ -4,7 +4,7 @@ import android.util.Log
 import java.util.*
 import kotlin.NoSuchElementException
 
-class TokenList: Collection<Token> {
+open class TokenList: Collection<Token> {
     override fun toString(): String {
         val iter = iterator()
         var str = "["
@@ -45,11 +45,11 @@ class TokenList: Collection<Token> {
         return TokenListIterator(this, head)
     }
 
-    fun iterator(node: TokenNode?): TokenListIterator {
+    open fun iterator(node: TokenNode?): TokenListIterator {
         return TokenListIterator(this, node)
     }
 
-    fun clear() {
+    open fun clear() {
         head = null
         tail = null
     }
