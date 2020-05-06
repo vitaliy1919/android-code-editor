@@ -104,6 +104,7 @@
                     android:scrollbars="none"
                     android:textColor="#ABB7C5"
                     android:textSize="12sp"
+                    android:dropDownVerticalOffset="100dp"
                     android:typeface="monospace"
                     tools:ignore="Autofill,LabelFor"
                     tools:text="1838383" />

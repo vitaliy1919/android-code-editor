@@ -379,7 +379,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                 index++
 //            addToken(s, R.color.darkula_comment, position, index)
 
-            return ParseResult(Token(TokenType.COMMENT, s, position,index + 1), index + 1)
+            return ParseResult(Token(TokenType.COMMENT, s, position,index), index + 1)
         }
     }
     fun parseStringLiteral(position: Int, s: CharSequence): ParseResult {
