@@ -55,7 +55,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ScrollView
+    <com.example.myapplication.views.ScrollViewFlingCallback
         android:id="@+id/vertical_scroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -110,6 +110,6 @@
                     tools:text="1838383" />
             </HorizontalScrollView>
         </LinearLayout>
-    </ScrollView>
+    </com.example.myapplication.views.ScrollViewFlingCallback>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

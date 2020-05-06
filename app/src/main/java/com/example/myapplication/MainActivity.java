@@ -36,6 +36,7 @@ import com.example.myapplication.SyntaxHighlight.Tokens.TokenList;
 import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
+import com.example.myapplication.views.ScrollViewFlingCallback;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedInputStream;
@@ -56,8 +57,9 @@ public class MainActivity extends AppCompatActivity {
     private MultiAutoCompleteTextView codeEdit;
     private NumbersView numbersView;
     private LinearLayout mainLayout;
+    private boolean isFling = false;
     private HorizontalScrollView wrapScroll;
-    private ScrollView verticalScroll;
+    private ScrollViewFlingCallback verticalScroll;
     private FastScroll fastScroll;
     private int currentLineNumber = -1;
     private boolean shouldUpdate = true;
@@ -224,25 +226,45 @@ public class MainActivity extends AppCompatActivity {
 
         styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
 
-        verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
-            Log.d("Scroll", verticalScroll.getScrollY() + "");
-            int line;
-            int startLine = codeEdit.getLayout().getLineForVertical((int) verticalScroll.getScrollY());
-            int endLine = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight());
-            int cursorLine = codeEdit.getLayout().getLineForOffset(codeEdit.getSelectionStart());
-            if (prevScrollY > verticalScroll.getScrollY()) {
-//                if (cursorLine > endLine - 2)
-                    line = startLine + 2;
-//                else line = -1;
-            } else
-                line = endLine - 2;
-            if (line > 0 && line < codeEdit.getLineCount()) {
-                int charNumber = codeEdit.getLayout().getLineStart(line);
-//            int endCharNumber = codeEdit.getLayout().getLineEnd(line);
-//            codeEdit.setCursorVisible(false);
-
-                codeEdit.setSelection(charNumber);
+        verticalScroll.setOnFlingListener(new ScrollViewFlingCallback.OnFlingListener() {
+            @Override
+            public void onFlingStarted() {
+                isFling = true;
             }
+
+            @Override
+            public void onFlingStopped() {
+                isFling = false;
+            }
+        });
+        wrapScroll.getViewTreeObserver().addOnScrollChangedListener(()-> {
+
+        });
+        verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            if (prevScrollY == verticalScroll.getScrollY()) {
+                Log.d("No Scroll", verticalScroll.getScrollY() + "pixels");
+                return;
+            }
+            Log.d("Scroll", verticalScroll.getScrollY() + "pixels");
+            int line;
+//            if (isFling) {
+                int startLine = codeEdit.getLayout().getLineForVertical((int) verticalScroll.getScrollY());
+                int endLine = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight());
+                int cursorLine = codeEdit.getLayout().getLineForOffset(codeEdit.getSelectionStart());
+                if (prevScrollY > verticalScroll.getScrollY()) {
+    //                if (cursorLine > endLine - 2)
+                        line = startLine + 2;
+    //                else line = -1;
+                } else
+                    line = endLine - 2;
+                if (line > 0 && line < codeEdit.getLineCount()) {
+                    int charNumber = codeEdit.getLayout().getLineStart(line);
+    //            int endCharNumber = codeEdit.getLayout().getLineEnd(line);
+    //            codeEdit.setCursorVisible(false);
+
+                    codeEdit.setSelection(charNumber);
+                }
+//                }
 //            codeEdit.setFocusableInTouchMode(true);
             if (highlightCode)
                 styler.updateStyling(verticalScroll.getScrollY(), verticalScroll.getHeight());
