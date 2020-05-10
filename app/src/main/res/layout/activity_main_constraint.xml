@@ -88,7 +88,7 @@
                 android:layout_height="match_parent"
                 android:fillViewport="true">
 
-                <MultiAutoCompleteTextView
+                <com.example.myapplication.views.SuggestionTextView
                     android:id="@+id/code_editor"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
@@ -104,8 +104,8 @@
                     android:scrollbars="none"
                     android:textColor="#ABB7C5"
                     android:textSize="12sp"
-                    android:dropDownVerticalOffset="100dp"
                     android:typeface="monospace"
+                    android:popupBackground="@color/darkula_background"
                     tools:ignore="Autofill,LabelFor"
                     tools:text="1838383" />
             </HorizontalScrollView>

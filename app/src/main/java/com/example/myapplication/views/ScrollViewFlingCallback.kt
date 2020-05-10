@@ -1,7 +1,9 @@
 package com.example.myapplication.views
 
 import android.content.Context
+import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.widget.ScrollView
 
 
@@ -37,5 +39,12 @@ class ScrollViewFlingCallback @JvmOverloads constructor(context: Context?, attrs
                 postDelayed(mScrollChecker, DELAY_MILLIS.toLong())
             }
         }
+    }
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        val rect = Rect()
+        getWindowVisibleDisplayFrame(rect)
+        Log.d("Size", "$w $h")
+
     }
 }

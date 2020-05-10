@@ -37,6 +37,7 @@ import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 import com.example.myapplication.views.ScrollViewFlingCallback;
+import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedInputStream;
@@ -219,10 +220,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_dropdown_item_1line, COUNTRIES);
-        codeEdit.setAdapter(adapter);
-        codeEdit.setTokenizer(new MultiAutoCompleteTextView.CommaTokenizer());
+
 
         styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
 

@@ -21,6 +21,8 @@ fun CharSequence.charAtSafe(i: Int):Char {
         return (-1).toChar()
 
 }
+val parentheses = "{}[]()"
+val operators = "><=~:,.+-*/&|%^?;"
 class ParseResult(var token: Token? = null, var position: Int = -1)
 class CPlusPlusHighlighter(val context: Context):Highlighter() {
     fun parseFromPosition(tokenList: ArrayList<Token>,s: CharSequence, index: Int) : Int {
@@ -171,7 +173,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 
     private val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
     private val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
-    private val reservedWords = arrayOf("alignas",
+    public val reservedWords = arrayOf("alignas",
             "alignof",
             "and",
             "and_eq",
@@ -272,8 +274,8 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
     private val digitsPattern: Pattern
     private val suffix = "ul{0,2}|l{1,2}u?"
 
-    private val parentheses = "{}[]()"
-    private val operators = "><=~:,.+-*/&|%^?;"
+
+
 
     private val decimalNumber = """[1-9][0-9']*($suffix)?"""
     private val octalNumber = """0[0-7']*($suffix)?"""
