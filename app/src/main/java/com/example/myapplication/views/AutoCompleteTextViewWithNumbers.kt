@@ -11,6 +11,7 @@ import androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
 import com.example.myapplication.R
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter
 import com.example.myapplication.SyntaxHighlight.Highlighter
+import com.example.myapplication.SyntaxHighlight.Suggestions.suggestions
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
 
 class SuggestionTextView : AppCompatMultiAutoCompleteTextView {
@@ -36,7 +37,7 @@ class SuggestionTextView : AppCompatMultiAutoCompleteTextView {
 
     fun initialize(highlighter: CPlusPlusHighlighter) {
         val adapter: ArrayAdapter<String> = ArrayAdapter<String>(context,
-                R.layout.item_suggestion, highlighter.reservedWords)
+                R.layout.item_suggestion, suggestions)
         setAdapter(adapter)
         setTokenizer(CPlusPlusTokenizer())
         this.highlighter = highlighter

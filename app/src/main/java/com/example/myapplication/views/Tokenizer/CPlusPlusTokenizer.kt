@@ -2,8 +2,6 @@ package com.example.myapplication.views.Tokenizer
 
 import android.widget.MultiAutoCompleteTextView
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter
-import com.example.myapplication.SyntaxHighlight.operators
-import com.example.myapplication.SyntaxHighlight.parentheses
 import kotlin.math.max
 import kotlin.math.min
 

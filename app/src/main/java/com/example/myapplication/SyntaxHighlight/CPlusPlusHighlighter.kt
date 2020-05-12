@@ -2,6 +2,7 @@ package com.example.myapplication.SyntaxHighlight
 
 import android.content.Context
 import android.util.Log
+import com.example.myapplication.SyntaxHighlight.LanguageConstants.*
 import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenList
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenType
@@ -21,8 +22,7 @@ fun CharSequence.charAtSafe(i: Int):Char {
         return (-1).toChar()
 
 }
-val parentheses = "{}[]()"
-val operators = "><=~:,.+-*/&|%^?;"
+
 class ParseResult(var token: Token? = null, var position: Int = -1)
 class CPlusPlusHighlighter(val context: Context):Highlighter() {
     fun parseFromPosition(tokenList: ArrayList<Token>,s: CharSequence, index: Int) : Int {
@@ -171,130 +171,8 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 
     }
 
-    private val commentPattern = Pattern.compile("""(//.*\n)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)""")
-    private val identifiersPattern = Pattern.compile("""[a-zA-Z_](\w|_)*""")
-    public val reservedWords = arrayOf("alignas",
-            "alignof",
-            "and",
-            "and_eq",
-            "asm",
-            "atomic_cancel",
-            "atomic_commit",
-            "atomic_noexcept",
-            "auto",
-            "bitand",
-            "bitor",
-            "bool",
-            "break",
-            "case",
-            "catch",
-            "char",
-            "char8_t",
-            "char16_t ",
-            "char32_t",
-            "class",
-            "compl",
-            "concept",
-            "const",
-            "consteval",
-            "constexpr",
-            "constinit",
-            "const_cast",
-            "continue",
-            "co_await",
-            "co_return",
-            "co_yield",
-            "decltype",
-            "default",
-            "delete",
-            "do",
-            "double",
-            "dynamic_cast",
-            "else",
-            "enum",
-            "explicit",
-            "export",
-            "extern",
-            "false",
-            "float",
-            "for",
-            "friend",
-            "goto",
-            "if",
-            "inline",
-            "int",
-            "long",
-            "mutable",
-            "namespace",
-            "new",
-            "noexcept",
-            "not",
-            "not_eq",
-            "nullptr",
-            "operator",
-            "or",
-            "or_eq",
-            "private",
-            "protected",
-            "public",
-            "reflexpr",
-            "register",
-            "reinterpret_cast",
-            "requires",
-            "return",
-            "short",
-            "signed",
-            "sizeof",
-            "static",
-            "static_assert",
-            "static_cast",
-            "struct",
-            "switch",
-            "synchronized",
-            "template",
-            "this",
-            "thread_local",
-            "throw",
-            "true",
-            "try",
-            "typedef",
-            "typeid",
-            "typename",
-            "union",
-            "unsigned",
-            "using",
-            "virtual",
-            "void",
-            "volatile",
-            "wchar_t",
-            "while",
-            "xor",
-            "xor_e")
     private val reservedWordsTrie = Trie()
     private val digitsPattern: Pattern
-    private val suffix = "ul{0,2}|l{1,2}u?"
-
-
-
-
-    private val decimalNumber = """[1-9][0-9']*($suffix)?"""
-    private val octalNumber = """0[0-7']*($suffix)?"""
-    private val hexNumber = """0x[0-9a-f']+($suffix)?"""
-    private val binaryNumber = """0b[0-1']+($suffix)?"""
-
-//    val floatSequence = decimalNumber
-    private val digitSequence = """\d+"""
-    private val floatExponent = """e(\+|-)?$digitSequence"""
-    private val floatSuffix = """(f|l)?"""
-    private val floatType1 = """$digitSequence$floatExponent"""
-    private val floatType2 = """$digitSequence\.($digitSequence)?($floatExponent)?($floatSuffix)?"""
-    private val floatType3 = """($digitSequence)?\.($digitSequence)($floatExponent)?($floatSuffix)?"""
-
-    private val hexSequence = """[0-9a-f]+"""
-    private val hexFloatExponent = """p(\+|-)?$decimalNumber"""
-    private val hexFloatType1 = """0x($hexSequence)($hexFloatExponent)?($floatSuffix)?"""
-    private val hexFloatType2 = """0x($hexSequence)\.($hexFloatExponent)?($floatSuffix)?"""
-    private val hexFloatType3 = """0x($hexSequence)?\.($hexSequence)($hexFloatExponent)?($floatSuffix)?"""
 
     init {
         val digitsRegexes = arrayOf(

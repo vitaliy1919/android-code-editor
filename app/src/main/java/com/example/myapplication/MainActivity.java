@@ -37,6 +37,7 @@ import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 import com.example.myapplication.views.ScrollViewFlingCallback;
+import com.example.myapplication.views.SuggestionTextView;
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     boolean word_wrap = false;
     private LinearLayout letters;
     private ProgressBar progressBar;
-    private MultiAutoCompleteTextView codeEdit;
+    private SuggestionTextView codeEdit;
     private NumbersView numbersView;
     private LinearLayout mainLayout;
     private boolean isFling = false;
@@ -212,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
             });
             letters.addView(letter);
         }
-
+        codeEdit.initialize(highlighter);
         codeEdit.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             if (newDataSet) {
                 newDataSet = false;
