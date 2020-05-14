@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.widget.ArrayAdapter
 import androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
 import com.example.myapplication.R
@@ -14,7 +15,7 @@ import com.example.myapplication.SyntaxHighlight.Highlighter
 import com.example.myapplication.SyntaxHighlight.Suggestions.suggestions
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
 
-class SuggestionTextView : AppCompatMultiAutoCompleteTextView {
+class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
     val paint:Paint = Paint()
     var symbolWidth: Float = -1f
@@ -56,6 +57,10 @@ class SuggestionTextView : AppCompatMultiAutoCompleteTextView {
             }
         })
     }
+
+    override fun onTouchEvent(event: MotionEvent?): Boolean {
+        return super.onTouchEvent(event)
+    }
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         val rect = Rect()
@@ -65,4 +70,7 @@ class SuggestionTextView : AppCompatMultiAutoCompleteTextView {
         dropDownWidth = (0.5 * w).toInt()
     }
 
+    fun changePopupPosition() {
+//        sele
+    }
 }

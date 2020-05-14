@@ -88,7 +88,7 @@
                 android:layout_height="match_parent"
                 android:fillViewport="true">
 
-                <com.example.myapplication.views.SuggestionTextView
+                <com.example.myapplication.views.SuggestionsTextView
                     android:id="@+id/code_editor"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"

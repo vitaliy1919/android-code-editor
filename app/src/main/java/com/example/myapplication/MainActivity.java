@@ -14,12 +14,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
-import android.widget.MultiAutoCompleteTextView;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,13 +29,11 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
-import com.example.myapplication.SyntaxHighlight.Tokens.TokenList;
 import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 import com.example.myapplication.views.ScrollViewFlingCallback;
-import com.example.myapplication.views.SuggestionTextView;
-import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer;
+import com.example.myapplication.views.SuggestionsTextView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.BufferedInputStream;
@@ -56,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
     boolean word_wrap = false;
     private LinearLayout letters;
     private ProgressBar progressBar;
-    private SuggestionTextView codeEdit;
+    private SuggestionsTextView codeEdit;
     private NumbersView numbersView;
     private LinearLayout mainLayout;
     private boolean isFling = false;
@@ -236,11 +231,9 @@ public class MainActivity extends AppCompatActivity {
                 isFling = false;
             }
         });
-        wrapScroll.getViewTreeObserver().addOnScrollChangedListener(()-> {
 
-        });
         verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
-            if (prevScrollY == verticalScroll.getScrollY()) {
+            if (prevScrollY == verticalScroll.getScrollY() || codeEdit.getSelectionStart() != codeEdit.getSelectionEnd()) {
                 Log.d("No Scroll", verticalScroll.getScrollY() + "pixels");
                 return;
             }
