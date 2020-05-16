@@ -9,6 +9,7 @@ import android.widget.EditText
 import androidx.core.content.ContextCompat
 import com.example.myapplication.SyntaxHighlight.Highlighter
 import com.example.myapplication.SyntaxHighlight.Tokens.Token
+import com.example.myapplication.utils.getVisibleLines
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
@@ -39,11 +40,7 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
 
     private var firstColoredLine = -1
     private var lastColoredLine = -1
-    private fun getVisibleLines(view: EditText, scrollY: Int, height: Int):Pair<Int, Int> {
-        return Pair(
-                view.layout.getLineForVertical(scrollY),
-                view.layout.getLineForVertical(scrollY + height))
-    }
+
 
     private fun colorLines(view: EditText, highlighter: Highlighter, firstVisibleLine: Int, lastVisibleLine: Int) {
 

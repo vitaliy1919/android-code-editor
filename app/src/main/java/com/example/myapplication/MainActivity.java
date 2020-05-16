@@ -17,11 +17,13 @@ import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
@@ -58,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private HorizontalScrollView wrapScroll;
     private ScrollViewFlingCallback verticalScroll;
     private FastScroll fastScroll;
+    private ConstraintLayout globalLayout;
+    private SeekBar seekBar;
     private int currentLineNumber = -1;
     private boolean shouldUpdate = true;
     private int startHighlight = -1;
@@ -184,6 +188,7 @@ public class MainActivity extends AppCompatActivity {
         verticalScroll = findViewById(R.id.vertical_scroll);
         fastScroll.initialize(codeEdit, verticalScroll);
         letters = findViewById(R.id.letters);
+        globalLayout = findViewById(R.id.global_layout);
         for (int i = 0; i < symbols.length(); i++) {
             TextView letter = new TextView(this);
             int padding = (int)ConverterKt.dpToPx(5.0f, this);
@@ -208,13 +213,15 @@ public class MainActivity extends AppCompatActivity {
             });
             letters.addView(letter);
         }
-        codeEdit.initialize(highlighter);
+        codeEdit.initialize(highlighter, verticalScroll, globalLayout, letters);
         codeEdit.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
             if (newDataSet) {
                 newDataSet = false;
                 styler.updateStyling((int)prevScrollY, verticalScroll.getHeight());
             }
         });
+
+
 
 
 

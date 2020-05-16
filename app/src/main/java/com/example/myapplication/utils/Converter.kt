@@ -2,6 +2,8 @@ package com.example.myapplication.utils
 
 import android.content.Context
 import android.util.TypedValue
+import android.widget.EditText
+import android.widget.TextView
 import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import kotlin.math.max
 import kotlin.math.min
@@ -49,4 +51,10 @@ fun findCharAfter(s: CharSequence, index: Int, c: Char): Int {
     while (pos < s.length && s[pos] != c)
         pos++
     return min(pos, s.length - 1)
+}
+
+fun getVisibleLines(view: TextView, scrollY: Int, height: Int):Pair<Int, Int> {
+    return Pair(
+            view.layout.getLineForVertical(scrollY),
+            view.layout.getLineForVertical(scrollY + height))
 }
