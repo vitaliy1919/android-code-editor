@@ -8,6 +8,7 @@ import android.text.TextWatcher
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -54,6 +55,13 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
         this.globalLayout = globalLayout
         this.lettersHeight = lettersHeight
         scrollView = scroll
+        scrollView!!.addOnLayoutChangeListener(object : View.OnLayoutChangeListener{
+            override fun onLayoutChange(v: View?, left: Int, top: Int, right: Int, bottom: Int, oldLeft: Int, oldTop: Int, oldRight: Int, oldBottom: Int) {
+                dropDownHeight = (0.5 * scrollView!!.height).toInt()
+                dropDownWidth = (0.5 * scrollView!!.width).toInt()
+                changePopupPosition()
+            }
+        })
         addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 Log.d("Offset", dropDownVerticalOffset.toString())
@@ -84,12 +92,11 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 //    }
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        val rect = Rect()
-        getWindowVisibleDisplayFrame(rect)
+//        val rect = Rect()
+//        if (scrollView == null)
+//            return
 //        Log.d("Size", "$w $h")
-        dropDownHeight = (0.5 * h).toInt()
-        dropDownWidth = (0.5 * w).toInt()
-        changePopupPosition()
+
     }
 
     private fun getVisibleHeight(): Int {
@@ -97,8 +104,13 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
         getWindowVisibleDisplayFrame(rect)
         return rect.bottom - rect.top
     }
+    private fun getVisibleWidth(): Int {
+        val rect = Rect()
+        getWindowVisibleDisplayFrame(rect)
+        return rect.right - rect.left
+    }
     fun changePopupPosition() {
-        if (selectionStart != selectionEnd || globalLayout == null || lettersHeight == null)
+        if (layout == null || selectionStart != selectionEnd || globalLayout == null || lettersHeight == null)
             return
 //        val rect = Rect()
 //        getWindowVisibleDisplayFrame(rect)
@@ -133,6 +145,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             localTextPosition = -scrollY + textTop + paddingTop - dropDownHeight
         }
         dropDownVerticalOffset = dropDownHeight + localTextPosition
+        dropDownHorizontalOffset = layout.getPrimaryHorizontal(cursorPos).toInt()
         Log.d("Offset", dropDownVerticalOffset.toString())
 
         val (firstVisibleLine, lastVisibleLine) = getVisibleLines(this, globalLayout!!.scrollY, globalLayout!!.height)

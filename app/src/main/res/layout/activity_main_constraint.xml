@@ -107,6 +107,7 @@
                     android:textColor="#ABB7C5"
                     android:textSize="12sp"
                     android:typeface="monospace"
+                    android:dropDownAnchor="@id/vertical_scroll"
                     android:popupBackground="@color/darkula_background"
                     tools:ignore="Autofill,LabelFor"
                     tools:text="1838383" />
