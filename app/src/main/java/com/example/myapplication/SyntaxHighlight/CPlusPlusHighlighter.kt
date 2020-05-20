@@ -25,7 +25,12 @@ fun CharSequence.charAtSafe(i: Int):Char {
 
 class ParseResult(var token: Token? = null, var position: Int = -1)
 class CPlusPlusHighlighter(val context: Context):Highlighter() {
-    fun parseFromPosition(tokenList: ArrayList<Token>,s: CharSequence, index: Int) : Int {
+    var tokenIdentifiers: HashSet<String> = HashSet()
+    override fun identifiers(): HashSet<String> {
+        return tokenIdentifiers
+    }
+
+    fun parseFromPosition(tokenList: ArrayList<Token>, identifiers: HashSet<String>, s: CharSequence, index: Int) : Int {
         var parseResult: ParseResult = ParseResult()
         var position = index
         if (parentheses.indexOf(s[position]) != -1) {
@@ -52,6 +57,8 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             parseResult = parseWithRegex(digitsPattern, position, s, TokenType.NUMBER)
 
         if (parseResult.token != null) {
+            if (parseResult.token!!.type == TokenType.IDENTIFIER)
+                identifiers.add(parseResult.token!!.getString())
             tokenList.add(parseResult.token!!)
             position = parseResult.position
         } else {
@@ -61,13 +68,15 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
     }
     override fun parse(s: CharSequence) {
         tokens.clear()
+        tokenIdentifiers.clear()
         var position = 0;
         while (position < s.length) {
-            position = parseFromPosition(tokens, s, position)
+            position = parseFromPosition(tokens, tokenIdentifiers, s, position)
         }
     }
-    override fun update(s: CharSequence, start: Int, end: Int, offset: Int) {
+    override fun update(s: CharSequence, start: Int, end: Int, offset: Int, cursor: Int) {
         var startTime = System.currentTimeMillis()
+        var newIdentifiers = HashSet<String>()
         if (s.isEmpty()) {
             tokens.clear()
             return
@@ -105,8 +114,11 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                 break
             }
 
-            if (interSectionResult == InterSectionResult.OUTSIDE_LEFT)
+            if (interSectionResult == InterSectionResult.OUTSIDE_LEFT) {
                 beforeFirstChangedTokenIter = curNode
+                if (data.type == TokenType.IDENTIFIER)
+                    newIdentifiers.add(data.getString())
+            }
             if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
                 firstTokenToOffset = curNode
                 break
@@ -121,7 +133,9 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 
         val newTokenList = ArrayList<Token>()
         while (startIndex <= updateEndIndex) {
-            startIndex = parseFromPosition(newTokenList, s, startIndex)
+            startIndex = parseFromPosition(newTokenList, newIdentifiers, s, startIndex)
+            if (startIndex == cursor && !newTokenList.isEmpty())
+                newIdentifiers.remove(newTokenList.last().getString())
         }
 
         val lastTokenEnd = startIndex
@@ -160,9 +174,12 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                     val data = tokens[i]
                     data.start += offset
                     data.end += offset
+                    if (data.type == TokenType.IDENTIFIER)
+                        newIdentifiers.add(data.getString())
                 }
             }
         }
+        tokenIdentifiers = newIdentifiers
         Log.d("Update", "Offset shift: ${(System.currentTimeMillis() - offsetStartTime) / 1000.0}s")
         Log.d("Update", "Update took: ${(System.currentTimeMillis() - startTime) / 1000.0}s")
         Log.d("Update", "Tokens: ${tokens.size}")

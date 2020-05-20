@@ -265,8 +265,9 @@ public class MainActivity extends AppCompatActivity {
                 }
 //                }
 //            codeEdit.setFocusableInTouchMode(true);
-            if (highlightCode)
+            if (highlightCode) {
                 styler.updateStyling(verticalScroll.getScrollY(), verticalScroll.getHeight());
+            }
             prevScrollY = verticalScroll.getScrollY();
         });
 
@@ -291,7 +292,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("TextOn", start+", "+count);
                 if (!newDataSet) {
 //                    newDataSet = false;
-                    highlighter.update(s, start, start + count, count - before);
+                    highlighter.update(s, start, start + count, count - before, codeEdit.getSelectionStart());
+                    codeEdit.updateIdentifiersTokens(highlighter.identifiers());
                     styler.updateStyling((int) prevScrollY, verticalScroll.getHeight());
                 }
 //                needsUpdate = highlighter.checkNeedUpdate(s, start, start+count);

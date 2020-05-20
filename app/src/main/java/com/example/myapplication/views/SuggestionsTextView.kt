@@ -3,6 +3,7 @@ package com.example.myapplication.views
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Rect
+import android.media.session.MediaSession
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
@@ -17,6 +18,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.myapplication.R
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter
 import com.example.myapplication.SyntaxHighlight.Suggestions.suggestions
+import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import com.example.myapplication.utils.getVisibleLines
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
 
@@ -30,7 +32,10 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     var highlighter: CPlusPlusHighlighter? = null
     var globalLayout: ConstraintLayout? = null
     var scrollView: ScrollView? = null
+    val suggestionList = suggestions.toCollection(ArrayList())
 
+    val adapter: ArrayAdapter<String> = ArrayAdapter<String>(context,
+            R.layout.item_suggestion, suggestionList)
 
     constructor(context: Context):super(context) {
 //        setText("LOL")
@@ -47,8 +52,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     }
 
     fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, globalLayout: ConstraintLayout, lettersHeight: LinearLayout) {
-        val adapter: ArrayAdapter<String> = ArrayAdapter<String>(context,
-                R.layout.item_suggestion, suggestions)
+
         setAdapter(adapter)
         setTokenizer(CPlusPlusTokenizer())
         this.highlighter = highlighter
@@ -108,6 +112,13 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
         val rect = Rect()
         getWindowVisibleDisplayFrame(rect)
         return rect.right - rect.left
+    }
+
+    fun updateIdentifiersTokens(identifiers: HashSet<String>) {
+        adapter.clear()
+
+        adapter.addAll(suggestionList+identifiers)
+
     }
     fun changePopupPosition() {
         if (layout == null || selectionStart != selectionEnd || globalLayout == null || lettersHeight == null)
