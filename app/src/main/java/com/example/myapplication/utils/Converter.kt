@@ -58,3 +58,14 @@ fun getVisibleLines(view: TextView, scrollY: Int, height: Int):Pair<Int, Int> {
             view.layout.getLineForVertical(scrollY),
             view.layout.getLineForVertical(scrollY + height))
 }
+
+fun isOpenParentheses(p: Char):Boolean {
+    return "([{".indexOf(p) != -1
+}
+
+fun isClosedParentheses(p: Char):Boolean {
+    return ")]}".indexOf(p) != -1
+}
+fun matchParentheses(open: Char, closed: Char):Boolean {
+    return (open == '(' && closed == ')') || (open == '[' && closed == ']') || (open == '{' && closed == '}')
+}
