@@ -1,14 +1,22 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorStatusBar</item>
         <item name="colorPrimaryDark">@color/colorSecondaryVariant</item>
         <item name="colorAccent">@color/colorPrimary</item>
         <!--        <item name="colorAccent">@color/colorAccent</item>-->
     </style>
-
+    <style name="PreferenceScreen" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="android:textColor">@android:color/primary_text_dark</item>
+        <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
+        <item name="android:textColorSecondary">@color/darkula_text</item>
+        <item name="colorPrimary">@color/colorStatusBar</item>
+        <item name="colorPrimaryDark">@color/colorSecondaryVariant</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="android:background">@color/darkula_background</item>
+    </style>
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

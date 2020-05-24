@@ -1,11 +1,15 @@
 package com.example.myapplication;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+
+import androidx.core.content.SharedPreferencesKt;
+import androidx.preference.PreferenceManager;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -27,10 +31,12 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 
+import com.example.myapplication.Files.FileIO;
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
+import com.example.myapplication.settings.SettingsData;
 import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
@@ -62,12 +68,15 @@ public class MainActivity extends AppCompatActivity {
     private FastScroll fastScroll;
     private ConstraintLayout globalLayout;
     private SeekBar seekBar;
+    private FileIO fileIO;
     private int currentLineNumber = -1;
     private boolean shouldUpdate = true;
     private int startHighlight = -1;
     private int endHighlight = -1;
+    private String recentlyEnteredString = "";
     private boolean needsUpdate = true;
     private Handler handler;
+    private SettingsData settingsData = new SettingsData();
     private CPlusPlusHighlighter highlighter;
     private Styler styler;
     private boolean highlightCode = true;
@@ -107,22 +116,12 @@ public class MainActivity extends AppCompatActivity {
                     mainLayout.addView(wrapScroll);
                     wrapScroll.addView(codeEdit);
                 }
-                shouldUpdate = true;
                 item.setChecked(!item.isChecked());
                 break;
             case R.id.open_file:
-//                if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                        != PackageManager.PERMISSION_GRANTED) {
-//                    ActivityCompat.requestPermissions(MainActivity.this,
-//                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-//                            1);
-//                    return true;
-//                }
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
-//                intent.setType("application/pdf");
                 intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-//                startActivityForResult(intent, EDIT_REQUEST);
                 intent.setType("*/*");
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivityForResult(intent, REQUEST_OPEN_FILE);
@@ -131,12 +130,8 @@ public class MainActivity extends AppCompatActivity {
             case R.id.save_file:
                 if (currentlyOpenedFile != null) {
                     try {
-                        OutputStream stream = getContentResolver().openOutputStream(currentlyOpenedFile);
-                        OutputStreamWriter writer = new OutputStreamWriter(stream);
-                        writer.write(String.valueOf(codeEdit.getText()));
-                        writer.close();
+                        fileIO.saveFile(currentlyOpenedFile, codeEdit.getText().toString());
                         Snackbar.make(codeEdit, "Saved successfully", Snackbar.LENGTH_SHORT).show();
-
                     } catch (FileNotFoundException e) {
                         Snackbar.make(codeEdit, "File not found", Snackbar.LENGTH_SHORT).show();
                     } catch (IOException e) {
@@ -165,6 +160,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 item.setChecked(!item.isChecked());
+                break;
+            case R.id.settings_action:
+                Intent settingIntent = new Intent(this , SettingsActivity.class);
+                startActivity(settingIntent);
+                break;
         }
         return true;
     }
@@ -177,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         handler = new Handler(getMainLooper());
         setContentView(R.layout.activity_main_constraint);
+
         codeEdit = findViewById(R.id.code_editor);
         numbersView = findViewById(R.id.numbers_view);
         numbersView.initializeView(codeEdit);
@@ -189,6 +190,16 @@ public class MainActivity extends AppCompatActivity {
         fastScroll.initialize(codeEdit, verticalScroll);
         letters = findViewById(R.id.letters);
         globalLayout = findViewById(R.id.global_layout);
+
+        fileIO = new FileIO(this);
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
+        settingsData.fromSharedPreferenses(this, pref);
+        pref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                settingsData.updateValue(key, MainActivity.this, sharedPreferences);
+            }
+        });
         for (int i = 0; i < symbols.length(); i++) {
             TextView letter = new TextView(this);
             int padding = (int)ConverterKt.dpToPx(5.0f, this);
@@ -199,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
             );
             params.setMargins(padding, padding, padding, padding);
             String letterS = Character.toString(symbols.charAt(i));
-            letter.setTextSize(ConverterKt.spToPx(10, this));
+            letter.setTextSize(ConverterKt.spToPx(8, this));
             letter.setText(letterS);
             letter.setTextColor(ContextCompat.getColor(this,R.color.darkula_text));
             letter.setTypeface(ResourcesCompat.getFont(this, R.font.jetbrains_mono));
@@ -213,117 +224,10 @@ public class MainActivity extends AppCompatActivity {
             });
             letters.addView(letter);
         }
-        codeEdit.initialize(highlighter, verticalScroll, globalLayout, letters);
-        codeEdit.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
-            if (newDataSet) {
-                newDataSet = false;
-                styler.updateStyling((int)prevScrollY, verticalScroll.getHeight());
-            }
-        });
-
-
-
-
-
         styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
+        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler);
 
-        verticalScroll.setOnFlingListener(new ScrollViewFlingCallback.OnFlingListener() {
-            @Override
-            public void onFlingStarted() {
-                isFling = true;
-            }
 
-            @Override
-            public void onFlingStopped() {
-                isFling = false;
-            }
-        });
-
-        verticalScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
-            if (prevScrollY == verticalScroll.getScrollY() || codeEdit.getSelectionStart() != codeEdit.getSelectionEnd()) {
-                Log.d("No Scroll", verticalScroll.getScrollY() + "pixels");
-                return;
-            }
-            Log.d("Scroll", verticalScroll.getScrollY() + "pixels");
-            int line;
-//            if (isFling) {
-                int startLine = codeEdit.getLayout().getLineForVertical((int) verticalScroll.getScrollY());
-                int endLine = codeEdit.getLayout().getLineForVertical((int)verticalScroll.getScrollY() + verticalScroll.getHeight());
-                int cursorLine = codeEdit.getLayout().getLineForOffset(codeEdit.getSelectionStart());
-                if (prevScrollY > verticalScroll.getScrollY()) {
-    //                if (cursorLine > endLine - 2)
-                        line = startLine + 2;
-    //                else line = -1;
-                } else
-                    line = endLine - 2;
-                if (line > 0 && line < codeEdit.getLineCount()) {
-                    int charNumber = codeEdit.getLayout().getLineStart(line);
-    //            int endCharNumber = codeEdit.getLayout().getLineEnd(line);
-    //            codeEdit.setCursorVisible(false);
-
-                    codeEdit.setSelection(charNumber);
-                }
-//                }
-//            codeEdit.setFocusableInTouchMode(true);
-            if (highlightCode) {
-                styler.updateStyling(verticalScroll.getScrollY(), verticalScroll.getHeight());
-            }
-            prevScrollY = verticalScroll.getScrollY();
-        });
-
-        codeEdit.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                Log.d("TextBefore", start+", "+count);
-//                TokenList tokens = highlighter.getTokens();
-//                TokenList.TokenNode iter = tokens.getHead();
-//                while (iter != null) {
-//                    Log.d("T", iter.getData().getType().toString());
-//                    iter = iter.getNext();
-//                    if (iter == tokens.getHead())
-//                        break;
-//                }
-//                startHighlight  = ConverterKt.findCharBefore(s, Math.max(start - 1, 0), '\n');
-//                    endHighlight = ConverterKt.findCharAfter(s, start+count - 1,'\n') + after + 1;
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                Log.d("TextOn", start+", "+count);
-                if (!newDataSet) {
-//                    newDataSet = false;
-                    highlighter.update(s, start, start + count, count - before, codeEdit.getSelectionStart());
-                    codeEdit.updateIdentifiersTokens(highlighter.identifiers());
-                    styler.updateStyling((int) prevScrollY, verticalScroll.getHeight());
-                }
-//                needsUpdate = highlighter.checkNeedUpdate(s, start, start+count);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-//                if (needsUpdate) {
-//                    needsUpdate = false;
-//                    codeEdit.getText().insert(1, "Test");
-//                }
-//                    handler.post(() -> {
-
-            long startTime = System.currentTimeMillis();
-
-//            Object spansToRemove[] = s.getSpans(startHighlight, endHighlight, Object.class);
-//            for (Object span : spansToRemove) {
-//                if (span instanceof CharacterStyle)
-//                    s.removeSpan(span);
-//            }
-//            Log.d("SpanUpdate", (System.currentTimeMillis() - startTime) / 1000.0 + "");
-//            startTime = System.currentTimeMillis();
-            Log.d("HightLightTime", (System.currentTimeMillis() - startTime) / 1000.0 + "");
-//                    });
-//                }
-
-                shouldUpdate = true;
-
-            }
-        });
     }
 
     @Override
@@ -343,65 +247,22 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setSubtitle(fileName);
         if (requestCode == REQUEST_OPEN_FILE ) {
             progressBar.setVisibility(View.VISIBLE);
-            Thread readFile = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    long startTime = System.currentTimeMillis();
-//                    //Log.d("URI result", fileURI.toString());
-                    InputStream inputStream = null;
-                    String str = "";
-                    final StringBuilder buf = new StringBuilder();
-                    try {
-                        inputStream = getContentResolver().openInputStream(fileURI);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    int lines = 0;
-                    BufferedInputStream reader = new BufferedInputStream(inputStream);
-                    final ByteArrayOutputStream writer = new ByteArrayOutputStream();
-                    byte[] bytes = new byte[1024*1024];
-
-                    int chunkSize = 1;
-                    try {
-                        while (chunkSize > 0) {
-                            chunkSize = reader.available();
-                            chunkSize = reader.read(bytes, 0, chunkSize);
-                            writer.write(bytes, 0, chunkSize);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    long difference = System.currentTimeMillis() - startTime;
-                    //Log.d("File read", "Time:" + difference/ 1000.0);
-
-                    startTime = System.currentTimeMillis();
-                    final String data1 = writer.toString();
-
-                    difference = System.currentTimeMillis() - startTime;
-                    //Log.d("File read", "Convert time:" + difference/ 1000.0);
-
-                    try {
-                        inputStream.close();
-                        reader.close();
-                        writer.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            long startTime = System.currentTimeMillis();
-                            final String data = writer.toString();
-
-                            long difference = System.currentTimeMillis() - startTime;
-                            newDataSet = true;
-                            codeEdit.setText(data);
-                            highlighter.parse(codeEdit.getText());
-                            progressBar.setVisibility(View.INVISIBLE);
-                        }
+            Thread readFile = new Thread(() -> {
+//                    String data = "";
+                try {
+                    String data1 = fileIO.openFile(fileURI);
+                    runOnUiThread(() -> {
+                        newDataSet = true;
+                        codeEdit.setText(data1);
+                        codeEdit.setFileChanged(true);
+//                            highlighter.parse(codeEdit.getText());
+                        progressBar.setVisibility(View.INVISIBLE);
                     });
+                } catch (FileNotFoundException e) {
+                    Snackbar.make(codeEdit, "File not found", Snackbar.LENGTH_SHORT).show();
+                } catch (IOException e) {
+                    Snackbar.make(codeEdit, "Error while opening file", Snackbar.LENGTH_SHORT).show();
                 }
-
 
             });
             readFile.start();

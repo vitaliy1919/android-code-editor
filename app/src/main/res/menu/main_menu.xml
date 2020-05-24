@@ -23,6 +23,11 @@
                 android:icon="@drawable/ic_wrap_text_black_24dp"
                 android:checkable="true"
                 android:checked="true"/>
+            <item android:id="@+id/settings_action"
+                android:title="Settings"
+                android:icon="@drawable/ic_settings_black_24dp"
+                android:checkable="true"
+                android:checked="true"/>
         </menu>
     </item>
 

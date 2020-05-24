@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <SwitchPreferenceCompat
+        app:key="@string/wordWrap"
+        app:title="Word wrap"
+        android:defaultValue="false"
+        app:summary="Enable word wrap by default"/>
+    <SwitchPreferenceCompat
+        app:key="@string/codeHighlighting"
+        app:title="Highlight Code"
+        android:defaultValue="true"
+        app:summary="Enable code highlighting"/>
+    <SwitchPreferenceCompat
+        app:key="@string/codeCompletion"
+        app:title="Code Completion"
+        android:defaultValue="true"
+        app:summary="Enable code completion"/>
+    <SwitchPreferenceCompat
+        app:key="@string/autoIndent"
+        android:defaultValue="true"
+        app:title="Auto Indent Code"
+        app:summary="Enable auto indent"/>
+    <SeekBarPreference
+        app:key="@string/fontSize"
+        app:title="Editor Font size"
+        android:max="16"
+        android:min="8"
+        android:defaultValue="12"
+        app:showSeekBarValue="true"
+        />
+</PreferenceScreen>

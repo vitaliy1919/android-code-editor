@@ -26,8 +26,13 @@ fun CharSequence.charAtSafe(i: Int):Char {
 
 class ParseResult(var token: Token? = null, var position: Int = -1)
 class CPlusPlusHighlighter(val context: Context):Highlighter() {
+
+    override fun brackets(): ArrayList<BracketToken> {
+        return tokenBrackets
+    }
+
     var tokenIdentifiers: HashSet<String> = HashSet()
-    var brackets: ArrayList<BracketToken> = ArrayList()
+    var tokenBrackets: ArrayList<BracketToken> = ArrayList()
     override fun identifiers(): HashSet<String> {
         return tokenIdentifiers
     }
@@ -102,12 +107,12 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
     override fun parse(s: CharSequence) {
         tokens.clear()
         tokenIdentifiers.clear()
-        brackets.clear()
+        tokenBrackets.clear()
         var position = 0
         var indentationLevel = 0
         val bracketsStack = Stack<BracketToken>()
         while (position < s.length) {
-            val result = parseFromPosition(tokens, tokenIdentifiers, brackets, bracketsStack, indentationLevel, s, position)
+            val result = parseFromPosition(tokens, tokenIdentifiers, tokenBrackets, bracketsStack, indentationLevel, s, position)
             position = result.first
             indentationLevel = result.second
         }
@@ -161,7 +166,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                     newIdentifiers.add(data.getString())
                 else if (data is BracketToken) {
                     indent = handleBracketStack(data, newBracketsStack, indent)
-                    brackets.add(data)
+                    tokenBrackets.add(data)
                 }
             }
             if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
@@ -178,7 +183,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 
         val newTokenList = ArrayList<Token>()
         while (startIndex <= updateEndIndex) {
-            val result = parseFromPosition(newTokenList, newIdentifiers, brackets, newBracketsStack, indent, s, startIndex)
+            val result = parseFromPosition(newTokenList, newIdentifiers, tokenBrackets, newBracketsStack, indent, s, startIndex)
             startIndex = result.first
             indent = result.second
             if (startIndex == cursor && !newTokenList.isEmpty() && newTokenList.last().type == TokenType.IDENTIFIER)
@@ -225,13 +230,13 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                         newIdentifiers.add(data.getString())
                     else if (data is BracketToken) {
                         indent = handleBracketStack(data, newBracketsStack, indent)
-                        brackets.add(data)
+                        tokenBrackets.add(data)
                     }
                 }
             }
         }
         tokenIdentifiers = newIdentifiers
-        brackets = newBrackets
+        tokenBrackets = newBrackets
         Log.d("Update", "Offset shift: ${(System.currentTimeMillis() - offsetStartTime) / 1000.0}s")
         Log.d("Update", "Update took: ${(System.currentTimeMillis() - startTime) / 1000.0}s")
         Log.d("Update", "Tokens: ${tokens.size}")
