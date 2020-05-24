@@ -41,6 +41,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     var prevScrollY = -1f
     var toast: Toast? = null
     val suggestionList = suggestions.toCollection(ArrayList())
+    var suggestionsSize = suggestionList.size
     lateinit var adapter: ArrayAdapter<String>
 
     constructor(context: Context):super(context)
@@ -49,8 +50,9 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
 
     fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, settingsData: SettingsData, styler: Styler) {
+        val list = ArrayList(suggestionList)
         adapter = ArrayAdapter<String>(context,
-                R.layout.item_suggestion, suggestionList)
+                R.layout.item_suggestion, list)
         setAdapter(adapter)
         setTokenizer(CPlusPlusTokenizer())
         this.highlighter = highlighter
@@ -140,8 +142,11 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
 
     fun updateIdentifiersTokens(identifiers: HashSet<String>) {
+//        suggestionList.subList(suggestionsSize, suggestionList.size).clear()
         adapter.clear()
-        adapter.addAll(suggestionList+identifiers)
+        adapter.addAll(suggestionList + identifiers)
+//        suggestionList.addAll(identifiers)
+//        adapter.addAll(suggestionList+identifiers)
     }
 
     fun changePopupPosition() {
