@@ -47,12 +47,14 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             stack.add(curToken)
         } else if (isClosedParentheses(curChar)) {
             indent--
+            if (stack.empty())
+                return indent
             val openParenthesesToken = stack.pop()
             openParenthesesToken.matchingBracket = curToken
             curToken.matchingBracket = openParenthesesToken
             curToken.indentationLevel = indent
             val openParentheses = curToken.s[openParenthesesToken.start]
-            if (matchParentheses(openParentheses, curChar))
+            if (!matchParentheses(openParentheses, curChar))
                 Log.d("Parentheses", "Doesn't match")
 
         }
@@ -118,8 +120,8 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         }
     }
     override fun update(s: CharSequence, start: Int, end: Int, offset: Int, cursor: Int) {
-        var startTime = System.currentTimeMillis()
-        var newIdentifiers = HashSet<String>()
+        val startTime = System.currentTimeMillis()
+        val newIdentifiers = HashSet<String>()
         val newBrackets = ArrayList<BracketToken>()
         val newBracketsStack = Stack<BracketToken>()
         var indent = 0
@@ -129,9 +131,6 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         }
         var updateStartIndex = start - 1
         var updateEndIndex = end
-//        if (start == end) {
-//            updateEndIndex = start - 1
-//        }
         while (updateStartIndex >= 0 && updateStartIndex < s.length && s[updateStartIndex] != '\n')
             updateStartIndex--;
         if (updateStartIndex < 0)
@@ -154,6 +153,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             val curNode = index
             index++
             val data = iter.next()
+            data.s = s
             val interSectionResult = intersect(data.start, data.end, updateStartIndex, updateEndIndex - offset + 1)
             if (interSectionResult == InterSectionResult.INTERSECTS) {
                 firstChangedTokenIter = curNode
@@ -166,7 +166,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
                     newIdentifiers.add(data.getString())
                 else if (data is BracketToken) {
                     indent = handleBracketStack(data, newBracketsStack, indent)
-                    tokenBrackets.add(data)
+                    newBrackets.add(data)
                 }
             }
             if (interSectionResult == InterSectionResult.OUTSIDE_RIGHT) {
@@ -183,7 +183,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
 
         val newTokenList = ArrayList<Token>()
         while (startIndex <= updateEndIndex) {
-            val result = parseFromPosition(newTokenList, newIdentifiers, tokenBrackets, newBracketsStack, indent, s, startIndex)
+            val result = parseFromPosition(newTokenList, newIdentifiers, newBrackets, newBracketsStack, indent, s, startIndex)
             startIndex = result.first
             indent = result.second
             if (startIndex == cursor && !newTokenList.isEmpty() && newTokenList.last().type == TokenType.IDENTIFIER)
@@ -224,13 +224,14 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             if (firstTokenToOffset >= 0) {
                 for (i in firstTokenToOffset until tokens.size) {
                     val data = tokens[i]
+                    data.s = s
                     data.start += offset
                     data.end += offset
                     if (data.type == TokenType.IDENTIFIER)
                         newIdentifiers.add(data.getString())
                     else if (data is BracketToken) {
                         indent = handleBracketStack(data, newBracketsStack, indent)
-                        tokenBrackets.add(data)
+                        newBrackets.add(data)
                     }
                 }
             }
@@ -286,35 +287,35 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         return (s[position] == '.' || s[position].isDigit())
     }
 
-    fun isComment(position: Int, s: CharSequence): Boolean {
+    private fun isComment(position: Int, s: CharSequence): Boolean {
         return (s[position] == '/' &&
             (s.charAtSafe(position+1) == '/' || s.charAtSafe(position+1) == '*'))
     }
 
-    fun isIdentifier(position: Int, s: CharSequence):Boolean {
+    private fun isIdentifier(position: Int, s: CharSequence):Boolean {
         return (s[position] == '_' || s[position].isLetter())
     }
-    fun isStringLiteral(position: Int, s: CharSequence): Boolean {
+    private fun isStringLiteral(position: Int, s: CharSequence): Boolean {
         if (s[position] == '\'' || s[position] == '\"')
             return true
         return false
     }
 
-    fun parseIdentifier(position: Int, s: CharSequence): ParseResult {
+    private fun parseIdentifier(position: Int, s: CharSequence): ParseResult {
         var index = position
         while (index < s.length && (s[index].isLetterOrDigit() || s[index] == '_'))
             index++
         return ParseResult(Token(TokenType.IDENTIFIER, s, position, index), index)
     }
 
-    fun parsePreProcessor(position: Int, s: CharSequence): ParseResult {
+    private fun parsePreProcessor(position: Int, s: CharSequence): ParseResult {
         var index = position
         while (index < s.length && !s[index].isWhitespace())
             index++
         return ParseResult(Token(TokenType.PREPROCESSOR, s, position, index), index)
     }
 
-    fun parseComment(position: Int, s: CharSequence): ParseResult {
+    private fun parseComment(position: Int, s: CharSequence): ParseResult {
         var index = position
         if (s[index+1] == '*') {
             while (index < s.length) {
@@ -336,7 +337,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             return ParseResult(Token(TokenType.COMMENT, s, position,index), index + 1)
         }
     }
-    fun parseStringLiteral(position: Int, s: CharSequence): ParseResult {
+    private fun parseStringLiteral(position: Int, s: CharSequence): ParseResult {
         var index = position + 1;
         val charType = s[position]
         while (index < s.length && s[index] != charType && s[index] != '\n') {
@@ -357,27 +358,5 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             return ParseResult(Token(type, s, matcher.start(), matcher.end()), matcher.end())
         }
         return ParseResult(null, position + 1)
-    }
-//    fun parseComment(position: Int, s: CharSequence) {
-//
-//    }
-    fun addToken(s:CharSequence, type: TokenType, matcher: Matcher) {
-        addToken(s, type, matcher.start(), matcher.end())
-//        tokens.insertTail(Token(type, s, matcher.start(), matcher.end()))
-//        s.setSpan(
-//                ForegroundColorSpan(ContextCompat.getColor(context, colorId)),
-//                matcher.start(),
-//                matcher.end(),
-//                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-    }
-
-    fun addToken(s:CharSequence, type: TokenType, begin: Int, end: Int) {
-        tokens.add(Token(type, s, begin, end))
-
-//        s.setSpan(
-//                ForegroundColorSpan(ContextCompat.getColor(context, colorId)),
-//                begin,
-//                end,
-//                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 }

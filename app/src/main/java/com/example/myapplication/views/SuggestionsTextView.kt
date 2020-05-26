@@ -17,27 +17,20 @@ import com.example.myapplication.SyntaxHighlight.Styler.Styler
 import com.example.myapplication.SyntaxHighlight.Suggestions.suggestions
 import com.example.myapplication.SyntaxHighlight.Tokens.BracketToken
 import com.example.myapplication.settings.SettingsData
+import com.example.myapplication.utils.isOpenParentheses
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
+import kotlin.math.max
 
 class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
-    lateinit var highlighter: CPlusPlusHighlighter
-    lateinit var scrollView: ScrollView
-    lateinit var settingsData: SettingsData
-    lateinit var styler: Styler
-
-    private var updateFile = false
-
-    var fileChanged: Boolean
-        get() = updateFile
-        set (value) {
-            updateFile = value
-            if (value) {
-                if (this::highlighter.isInitialized) {
-                    highlighter.parse(text)
-                }
-            }
-        }
+    private lateinit var highlighter: CPlusPlusHighlighter
+    private lateinit var scrollView: ScrollView
+    private lateinit var settingsData: SettingsData
+    private lateinit var styler: Styler
+    private var lastChange = ""
+    var startChange = -1
+    var endChange = -1
+    var fileChanged = false
     var prevScrollY = -1f
     var toast: Toast? = null
     val suggestionList = suggestions.toCollection(ArrayList())
@@ -98,41 +91,78 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             }
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
+                startChange = start
+                endChange = start + count
+                lastChange = s.subSequence(start, start + count).toString()
                 Log.d("TextOn", "$start, $count")
                 if (!fileChanged && settingsData.codeHighlighting) {
                     highlighter.update(s, start, start + count, count - before, selectionStart)
+//                    Log.d("Brackets", highlighter.brackets().toString())
                     updateIdentifiersTokens(highlighter.identifiers())
                     styler.updateStyling(prevScrollY.toInt(), scroll.height)
                 }
             }
 
             override fun afterTextChanged(s: Editable) {
-//                if (recentlyEnteredString == "\n") {
-//                    s.insert(codeEdit.getSelectionStart(), "\t\n")
-//                    //                    s.insert(codeEdit.getSelectionStart(),"\n");
-//                    codeEdit.setSelection(codeEdit.getSelectionStart() - 1)
-//                }
+                if (settingsData.autoIndent ) {
+                    val indent = detectCurrentIndentation()
+                    if (lastChange == "\n") {
+                        if (endChange < s.length && s[endChange] == '}') {
+                            text.insert(selectionStart, "\t".repeat(indent) + "\n")
+                            setSelection(selectionStart - 1)
+                        } else
+                            text.insert(selectionStart, "\t".repeat(indent))
+                    } else if (lastChange == "}") {
+                        var i = startChange - 1
+                        while (i >= 0 && s[i] != '\n' && s[i].isWhitespace()) {
+                            i--
+                        }
+                        if (i+1 < startChange)
+                            text.replace(i+1, startChange, "\t".repeat(max(indent - 1, 0)))
+                    }
+                }
             }
         })
     }
-
+    private fun detectCurrentIndentation(): Int {
+        if (selectionStart != selectionEnd || !this::highlighter.isInitialized)
+            return 0
+        val brackets = highlighter.brackets()
+        var currentSelection: BracketToken? = null
+        for (b in brackets) {
+            if (b.end <= selectionStart) {
+                currentSelection = b
+            } else
+                break
+        }
+        var indent = 0
+        if (currentSelection != null) {
+            indent = currentSelection.indentationLevel
+        }
+        return indent
+    }
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
-        changePopupPosition()
+        if (this::highlighter.isInitialized) {
+            if (isPopupShowing)
+                dismissDropDown()
+            else
+                changePopupPosition()
+        }
 //        if (selStart != selEnd || !this::highlighter.isInitialized)
 //            return
 //        val brackets = highlighter.brackets()
 //        var currentSelection: BracketToken? = null
 //        for (b in brackets) {
-//            if (b.start <= selStart) {
+//            if (b.end <= selStart) {
 //                currentSelection = b
-//
 //            } else
 //                break
 //        }
 //        var indent = 0
-//        if (currentSelection != null)
+//        if (currentSelection != null) {
 //            indent = currentSelection.indentationLevel
+//        }
 //        if (toast != null)
 //            toast!!.cancel()
 //        toast = Toast.makeText(context, "Indentation level: ${indent}", Toast.LENGTH_LONG)
@@ -142,11 +172,15 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
 
     fun updateIdentifiersTokens(identifiers: HashSet<String>) {
-//        suggestionList.subList(suggestionsSize, suggestionList.size).clear()
         adapter.clear()
         adapter.addAll(suggestionList + identifiers)
-//        suggestionList.addAll(identifiers)
-//        adapter.addAll(suggestionList+identifiers)
+    }
+
+    fun updateText(s: CharSequence) {
+        fileChanged = true
+        setText(s)
+        if (this::highlighter.isInitialized)
+            highlighter.parse(s)
     }
 
     fun changePopupPosition() {

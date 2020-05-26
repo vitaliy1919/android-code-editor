@@ -253,8 +253,7 @@ public class MainActivity extends AppCompatActivity {
                     String data1 = fileIO.openFile(fileURI);
                     runOnUiThread(() -> {
                         newDataSet = true;
-                        codeEdit.setText(data1);
-                        codeEdit.setFileChanged(true);
+                        codeEdit.updateText(data1);
 //                            highlighter.parse(codeEdit.getText());
                         progressBar.setVisibility(View.INVISIBLE);
                     });
