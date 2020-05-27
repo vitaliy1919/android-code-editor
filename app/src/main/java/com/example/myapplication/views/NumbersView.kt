@@ -44,17 +44,21 @@ class NumbersView : View {
         return digits
     }
 
-    fun initPaints() {
-        textPaint.setColor(ContextCompat.getColor(context, R.color.darkula_text))
-        textPaint.textSize = spToPx(12f, context)
-        textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.jetbrains_mono))
+    private fun getSymbolWidth(): Float {
         var width = -1.0f
         for (i in 0..9) {
             val currentMeasurement = textPaint.measureText(i.toString())
             if (currentMeasurement > width)
                 width = currentMeasurement
         }
-        symbolWidth = width
+        return width
+    }
+
+    fun initPaints() {
+        textPaint.setColor(ContextCompat.getColor(context, R.color.darkula_text))
+        textPaint.textSize = spToPx(12f, context)
+        textPaint.setTypeface(ResourcesCompat.getFont(context, R.font.jetbrains_mono))
+        symbolWidth = getSymbolWidth()
         setPadding(symbolWidth.toInt(), 0,0,0)
     }
 
@@ -66,8 +70,14 @@ class NumbersView : View {
 
     fun update() {
         invalidate();
-//        requestLayout();
     }
+
+    fun setTextSize(sizeInPx: Float) {
+        textPaint.textSize = sizeInPx
+        symbolWidth = getSymbolWidth()
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas?) {
         // Log.d("NumbersView", "Repainted!")
         super.onDraw(canvas)

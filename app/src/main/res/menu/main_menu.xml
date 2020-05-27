@@ -14,20 +14,18 @@
             <item android:id="@+id/save_file"
                 android:title="Save file"
                 android:icon="@drawable/ic_save_black_24dp"/>
-            <item android:id="@+id/wrap_content"
-                android:title="Wrap Text"
-                android:icon="@drawable/ic_wrap_text_black_24dp"
-                android:checkable="true" />
-            <item android:id="@+id/highlight_code"
-                android:title="Hightlight Code"
-                android:icon="@drawable/ic_wrap_text_black_24dp"
-                android:checkable="true"
-                android:checked="true"/>
+<!--            <item android:id="@+id/wrap_content"-->
+<!--                android:title="Wrap Text"-->
+<!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
+<!--                android:checkable="true" />-->
+<!--            <item android:id="@+id/highlight_code"-->
+<!--                android:title="Hightlight Code"-->
+<!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
+<!--                android:checkable="true"-->
+<!--                android:checked="true"/>-->
             <item android:id="@+id/settings_action"
                 android:title="Settings"
-                android:icon="@drawable/ic_settings_black_24dp"
-                android:checkable="true"
-                android:checked="true"/>
+                android:icon="@drawable/ic_settings_black_24dp" />
         </menu>
     </item>
 

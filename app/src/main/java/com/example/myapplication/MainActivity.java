@@ -8,13 +8,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 
-import androidx.core.content.SharedPreferencesKt;
 import androidx.preference.PreferenceManager;
 import android.provider.OpenableColumns;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.text.style.CharacterStyle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,15 +40,13 @@ import com.example.myapplication.views.ScrollViewFlingCallback;
 import com.example.myapplication.views.SuggestionsTextView;
 import com.google.android.material.snackbar.Snackbar;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+import static com.example.myapplication.utils.ConverterKt.spToPx;
+
+public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     static final int REQUEST_OPEN_FILE = 1;
     private static final int REQUEST_CREATE_FILE = 2;
     private Uri currentlyOpenedFile = null;
@@ -76,13 +70,13 @@ public class MainActivity extends AppCompatActivity {
     private String recentlyEnteredString = "";
     private boolean needsUpdate = true;
     private Handler handler;
-    private SettingsData settingsData = new SettingsData();
+    private SettingsData settingsData;
     private CPlusPlusHighlighter highlighter;
     private Styler styler;
     private boolean highlightCode = true;
     private float prevScrollY = -1;
     private boolean newDataSet = false;
-
+    private ArrayList<String> settingsChange = new ArrayList<>();
     public int countChar(String str, char c) {
         int count = 0;
 
@@ -92,6 +86,63 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return count;
+    }
+
+
+
+    private String symbols = "→;,.<>\"'={}&|!()+-*/[]#%^:_@?";
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        handler = new Handler(getMainLooper());
+        setContentView(R.layout.activity_main_constraint);
+
+        codeEdit = findViewById(R.id.code_editor);
+        numbersView = findViewById(R.id.numbers_view);
+        numbersView.initializeView(codeEdit);
+        wrapScroll = findViewById(R.id.wrap_horizontal_scroll);
+        mainLayout = findViewById(R.id.main_layout);
+        progressBar = findViewById(R.id.progress_bar);
+        highlighter = new CPlusPlusHighlighter(this);
+        fastScroll = findViewById(R.id.fast_scroll);
+        verticalScroll = findViewById(R.id.vertical_scroll);
+        fastScroll.initialize(codeEdit, verticalScroll);
+        letters = findViewById(R.id.letters);
+        globalLayout = findViewById(R.id.global_layout);
+
+        fileIO = new FileIO(this);
+
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
+        settingsData = new SettingsData(this);
+        settingsData.fromSharedPreferenses(pref);
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+
+        for (int i = 0; i < symbols.length(); i++) {
+            TextView letter = new TextView(this);
+            int padding = (int)ConverterKt.dpToPx(5.0f, this);
+            letter.setPadding(padding, padding, padding, padding);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            );
+            params.setMargins(padding, padding, padding, padding);
+            String letterS = Character.toString(symbols.charAt(i));
+            letter.setTextSize(spToPx(8, this));
+            letter.setText(letterS);
+            letter.setTextColor(ContextCompat.getColor(this,R.color.darkula_text));
+            letter.setTypeface(ResourcesCompat.getFont(this, R.font.jetbrains_mono));
+            letter.setLayoutParams(params);
+            letter.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String text = letterS.equals("→") ? "\t" : letterS;
+                    codeEdit.getText().replace(codeEdit.getSelectionStart(), codeEdit.getSelectionEnd(), text);
+                }
+            });
+            letters.addView(letter);
+        }
+        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
+        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler);
     }
 
 
@@ -105,19 +156,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.wrap_content:
-                word_wrap = !item.isChecked();
-                if (word_wrap) {
-                    wrapScroll.removeView(codeEdit);
-                    mainLayout.removeView(wrapScroll);
-                    mainLayout.addView(codeEdit);
-                } else {
-                    mainLayout.removeView(codeEdit);
-                    mainLayout.addView(wrapScroll);
-                    wrapScroll.addView(codeEdit);
-                }
-                item.setChecked(!item.isChecked());
-                break;
+//            case R.id.wrap_content:
+//                word_wrap = !item.isChecked();
+//                if (word_wrap) {
+//                    wrapScroll.removeView(codeEdit);
+//                    mainLayout.removeView(wrapScroll);
+//                    mainLayout.addView(codeEdit);
+//                } else {
+//                    mainLayout.removeView(codeEdit);
+//                    mainLayout.addView(wrapScroll);
+//                    wrapScroll.addView(codeEdit);
+//                }
+//                item.setChecked(!item.isChecked());
+//                break;
             case R.id.open_file:
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -148,19 +199,19 @@ public class MainActivity extends AppCompatActivity {
                     startActivityForResult(createFileIntent, REQUEST_CREATE_FILE);
                 }
                 break;
-            case R.id.highlight_code:
-                highlightCode = !item.isChecked();
-                if (!highlightCode) {
-                    highlighter.parse(codeEdit.getText());
-                } else {
-                    Object spansToRemove[] = codeEdit.getText().getSpans(0, codeEdit.getLayout().getLineEnd(codeEdit.getLineCount() - 1), Object.class);
-                    for (Object span : spansToRemove) {
-                        if (span instanceof CharacterStyle)
-                            codeEdit.getText().removeSpan(span);
-                    }
-                }
-                item.setChecked(!item.isChecked());
-                break;
+//            case R.id.highlight_code:
+//                highlightCode = !item.isChecked();
+//                if (!highlightCode) {
+//                    highlighter.parse(codeEdit.getText());
+//                } else {
+//                    Object spansToRemove[] = codeEdit.getText().getSpans(0, codeEdit.getLayout().getLineEnd(codeEdit.getLineCount() - 1), Object.class);
+//                    for (Object span : spansToRemove) {
+//                        if (span instanceof CharacterStyle)
+//                            codeEdit.getText().removeSpan(span);
+//                    }
+//                }
+//                item.setChecked(!item.isChecked());
+//                break;
             case R.id.settings_action:
                 Intent settingIntent = new Intent(this , SettingsActivity.class);
                 startActivity(settingIntent);
@@ -171,64 +222,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String[] COUNTRIES = new String[] {
             "Belgium", "France", "Italy", "Germany", "Spain"
     };
-    private String symbols = "→;,.<>\"'={}&|!()+-*/[]#%^:_@?";
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        handler = new Handler(getMainLooper());
-        setContentView(R.layout.activity_main_constraint);
-
-        codeEdit = findViewById(R.id.code_editor);
-        numbersView = findViewById(R.id.numbers_view);
-        numbersView.initializeView(codeEdit);
-        wrapScroll = findViewById(R.id.wrap_horizontal_scroll);
-        mainLayout = findViewById(R.id.main_layout);
-        progressBar = findViewById(R.id.progress_bar);
-        highlighter = new CPlusPlusHighlighter(this);
-        fastScroll = findViewById(R.id.fast_scroll);
-        verticalScroll = findViewById(R.id.vertical_scroll);
-        fastScroll.initialize(codeEdit, verticalScroll);
-        letters = findViewById(R.id.letters);
-        globalLayout = findViewById(R.id.global_layout);
-
-        fileIO = new FileIO(this);
-        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
-        settingsData.fromSharedPreferenses(this, pref);
-        pref.registerOnSharedPreferenceChangeListener(new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                settingsData.updateValue(key, MainActivity.this, sharedPreferences);
-            }
-        });
-        for (int i = 0; i < symbols.length(); i++) {
-            TextView letter = new TextView(this);
-            int padding = (int)ConverterKt.dpToPx(5.0f, this);
-            letter.setPadding(padding, padding, padding, padding);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(padding, padding, padding, padding);
-            String letterS = Character.toString(symbols.charAt(i));
-            letter.setTextSize(ConverterKt.spToPx(8, this));
-            letter.setText(letterS);
-            letter.setTextColor(ContextCompat.getColor(this,R.color.darkula_text));
-            letter.setTypeface(ResourcesCompat.getFont(this, R.font.jetbrains_mono));
-            letter.setLayoutParams(params);
-            letter.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String text = letterS.equals("→") ? "\t" : letterS;
-                    codeEdit.getText().replace(codeEdit.getSelectionStart(), codeEdit.getSelectionEnd(), text);
-                }
-            });
-            letters.addView(letter);
-        }
-        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
-        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler);
-
-
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -248,13 +241,11 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_OPEN_FILE ) {
             progressBar.setVisibility(View.VISIBLE);
             Thread readFile = new Thread(() -> {
-//                    String data = "";
                 try {
                     String data1 = fileIO.openFile(fileURI);
                     runOnUiThread(() -> {
                         newDataSet = true;
                         codeEdit.updateText(data1);
-//                            highlighter.parse(codeEdit.getText());
                         progressBar.setVisibility(View.INVISIBLE);
                     });
                 } catch (FileNotFoundException e) {
@@ -270,4 +261,59 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
+
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        for (String key: settingsChange) {
+            settingsData.updateValue(key, sharedPreferences);
+        }
+        settingsChange.clear();
+//        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+    }
+
+    public void changeWordWrap(boolean value) {
+        if (value) {
+            wrapScroll.removeView(codeEdit);
+            mainLayout.removeView(wrapScroll);
+            mainLayout.removeView(codeEdit);
+            mainLayout.addView(codeEdit);
+        } else {
+            wrapScroll.removeView(codeEdit);
+            mainLayout.removeView(codeEdit);
+            mainLayout.removeView(wrapScroll);
+            mainLayout.addView(wrapScroll);
+            wrapScroll.addView(codeEdit);
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        settingsChange.add(key);
+    }
+
+    public SuggestionsTextView getCodeEdit() {
+        return codeEdit;
+    }
+
+    public LinearLayout getMainLayout() {
+        return mainLayout;
+    }
+
+    public HorizontalScrollView getWrapScroll() {
+        return wrapScroll;
+    }
+
+
+    public NumbersView getNumbersView() {
+        return numbersView;
+    }
 }

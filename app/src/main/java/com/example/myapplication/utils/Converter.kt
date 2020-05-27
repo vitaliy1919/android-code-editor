@@ -69,3 +69,7 @@ fun isClosedParentheses(p: Char):Boolean {
 fun matchParentheses(open: Char, closed: Char):Boolean {
     return (open == '(' && closed == ')') || (open == '[' && closed == ']') || (open == '{' && closed == '}')
 }
+
+fun getString(context: Context, id: Int): String {
+    return context.resources.getString(id)
+}

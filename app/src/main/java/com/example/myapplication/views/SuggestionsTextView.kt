@@ -3,6 +3,7 @@ package com.example.myapplication.views
 import android.content.Context
 import android.text.Editable
 import android.text.TextWatcher
+import android.text.style.CharacterStyle
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
@@ -17,7 +18,6 @@ import com.example.myapplication.SyntaxHighlight.Styler.Styler
 import com.example.myapplication.SyntaxHighlight.Suggestions.suggestions
 import com.example.myapplication.SyntaxHighlight.Tokens.BracketToken
 import com.example.myapplication.settings.SettingsData
-import com.example.myapplication.utils.isOpenParentheses
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
 import kotlin.math.max
 
@@ -28,6 +28,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     private lateinit var settingsData: SettingsData
     private lateinit var styler: Styler
     private var lastChange = ""
+    var delayStylerUpdate = false
     var startChange = -1
     var endChange = -1
     var fileChanged = false
@@ -43,13 +44,10 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
 
     fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, settingsData: SettingsData, styler: Styler) {
-        val list = ArrayList(suggestionList)
-        adapter = ArrayAdapter<String>(context,
-                R.layout.item_suggestion, list)
-        setAdapter(adapter)
+        this.settingsData = settingsData
+        changeCodeCompletion(settingsData.codeCompletion)
         setTokenizer(CPlusPlusTokenizer())
         this.highlighter = highlighter
-        this.settingsData = settingsData
         this.styler = styler
         scrollView = scroll
         scrollView.addOnLayoutChangeListener(object : OnLayoutChangeListener{
@@ -80,9 +78,12 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             }
         })
         addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
-            if (fileChanged) {
+            if (fileChanged || delayStylerUpdate) {
                 fileChanged = false
-                styler.updateStyling(prevScrollY.toInt(), scroll.getHeight())
+                delayStylerUpdate = false
+                if (settingsData.codeHighlighting) {
+                    styler.updateStyling(prevScrollY.toInt(), scroll.getHeight())
+                }
             }
         }
         addTextChangedListener(object : TextWatcher {
@@ -97,9 +98,11 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
                 Log.d("TextOn", "$start, $count")
                 if (!fileChanged && settingsData.codeHighlighting) {
                     highlighter.update(s, start, start + count, count - before, selectionStart)
-//                    Log.d("Brackets", highlighter.brackets().toString())
                     updateIdentifiersTokens(highlighter.identifiers())
-                    styler.updateStyling(prevScrollY.toInt(), scroll.height)
+                    if (layout != null) {
+                        delayStylerUpdate = true
+                        styler.updateStyling(prevScrollY.toInt(), scroll.height)
+                    }
                 }
             }
 
@@ -149,42 +152,47 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             else
                 changePopupPosition()
         }
-//        if (selStart != selEnd || !this::highlighter.isInitialized)
-//            return
-//        val brackets = highlighter.brackets()
-//        var currentSelection: BracketToken? = null
-//        for (b in brackets) {
-//            if (b.end <= selStart) {
-//                currentSelection = b
-//            } else
-//                break
-//        }
-//        var indent = 0
-//        if (currentSelection != null) {
-//            indent = currentSelection.indentationLevel
-//        }
-//        if (toast != null)
-//            toast!!.cancel()
-//        toast = Toast.makeText(context, "Indentation level: ${indent}", Toast.LENGTH_LONG)
-//        toast!!.show()
-//        return
     }
 
 
     fun updateIdentifiersTokens(identifiers: HashSet<String>) {
-        adapter.clear()
-        adapter.addAll(suggestionList + identifiers)
+        if (this::settingsData.isInitialized && settingsData.codeCompletion) {
+            adapter.clear()
+            adapter.addAll(suggestionList + identifiers)
+        }
     }
 
     fun updateText(s: CharSequence) {
         fileChanged = true
         setText(s)
-        if (this::highlighter.isInitialized)
+        if (this::settingsData.isInitialized && settingsData.codeHighlighting)
             highlighter.parse(s)
     }
 
+    fun changeSyntaxHighlight(value: Boolean) {
+        if (this::highlighter.isInitialized) {
+            if (!value) {
+                highlighter.parse(text)
+            } else {
+                val spansToRemove: Array<Any> = text.getSpans(0, layout.getLineEnd(getLineCount() - 1), Any::class.java)
+                for (span in spansToRemove) {
+                    if (span is CharacterStyle) text.removeSpan(span)
+                }
+            }
+        }
+    }
+    fun changeCodeCompletion(value: Boolean) {
+        if (value) {
+            val list = ArrayList(suggestionList)
+            adapter = ArrayAdapter<String>(context,R .layout.item_suggestion, list)
+            setAdapter(adapter)
+        } else {
+            setAdapter(null)
+        }
+    }
     fun changePopupPosition() {
-        if (layout == null || selectionStart != selectionEnd)
+        if (layout == null || selectionStart != selectionEnd ||
+                (this::settingsData.isInitialized && !settingsData.codeCompletion))
             return
         val cursorPos = selectionStart
         val cursorLine = layout.getLineForOffset(cursorPos)
