@@ -1,8 +1,11 @@
 package com.example.myapplication.views
 
 import android.content.Context
+import android.graphics.Color
 import android.text.Editable
+import android.text.Spanned
 import android.text.TextWatcher
+import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
 import android.util.AttributeSet
 import android.util.Log
@@ -12,6 +15,7 @@ import android.widget.ArrayAdapter
 import android.widget.ScrollView
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
+import androidx.core.content.ContextCompat
 import com.example.myapplication.R
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter
 import com.example.myapplication.SyntaxHighlight.Styler.Styler
@@ -27,6 +31,9 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     private lateinit var scrollView: ScrollView
     private lateinit var settingsData: SettingsData
     private lateinit var styler: Styler
+    private var firstBracketSpan: CharacterStyle? = null
+    private var lastBracketSpan: CharacterStyle? = null
+
     private var lastChange = ""
     var delayStylerUpdate = false
     var startChange = -1
@@ -127,9 +134,10 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             }
         })
     }
-    private fun detectCurrentIndentation(): Int {
+
+    private fun getCurrentBracket(): BracketToken? {
         if (selectionStart != selectionEnd || !this::highlighter.isInitialized)
-            return 0
+            return null
         val brackets = highlighter.brackets()
         var currentSelection: BracketToken? = null
         for (b in brackets) {
@@ -138,6 +146,11 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             } else
                 break
         }
+        return currentSelection
+    }
+
+    private fun detectCurrentIndentation(): Int {
+        val currentSelection = getCurrentBracket()
         var indent = 0
         if (currentSelection != null) {
             indent = currentSelection.indentationLevel
@@ -151,6 +164,33 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
                 dismissDropDown()
             else
                 changePopupPosition()
+        }
+        if (firstBracketSpan != null) {
+            text.removeSpan(firstBracketSpan)
+            firstBracketSpan = null
+        }
+        if (lastBracketSpan != null) {
+            text.removeSpan(lastBracketSpan)
+            lastBracketSpan = null
+        }
+        if (selectionStart != selectionEnd || !this::highlighter.isInitialized)
+            return
+        val brackets = highlighter.brackets()
+        var currentSelection: BracketToken? = null
+        for (b in brackets) {
+            if (b.start == selectionStart || b.end == selectionStart) {
+                currentSelection = b
+                break
+            }
+        }
+        if (currentSelection != null) {
+            firstBracketSpan = BackgroundColorSpan(ContextCompat.getColor(context, R.color.colorPrimary))
+            text.setSpan(firstBracketSpan,currentSelection.start, currentSelection.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            if (currentSelection.matchingBracket != null) {
+                val matchingBracket = currentSelection.matchingBracket!!
+                lastBracketSpan = BackgroundColorSpan(ContextCompat.getColor(context, R.color.colorPrimary))
+                text.setSpan(lastBracketSpan,matchingBracket.start, matchingBracket.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
         }
     }
 
