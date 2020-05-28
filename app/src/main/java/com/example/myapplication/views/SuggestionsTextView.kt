@@ -21,8 +21,11 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter
 import com.example.myapplication.SyntaxHighlight.Styler.Styler
 import com.example.myapplication.SyntaxHighlight.Suggestions.suggestions
 import com.example.myapplication.SyntaxHighlight.Tokens.BracketToken
+import com.example.myapplication.history.FileHistory
+import com.example.myapplication.history.TextChange
 import com.example.myapplication.settings.SettingsData
 import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
+import java.io.File
 import kotlin.math.max
 
 class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
@@ -34,15 +37,19 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     private var firstBracketSpan: CharacterStyle? = null
     private var lastBracketSpan: CharacterStyle? = null
 
-    private var lastChange = ""
     var delayStylerUpdate = false
+    private var lastChange = ""
+    private var beforeLastChange = ""
+
     var startChange = -1
     var endChange = -1
+    var fileHistoryUsed = false
     var fileChanged = false
     var prevScrollY = -1f
     var toast: Toast? = null
     val suggestionList = suggestions.toCollection(ArrayList())
     var suggestionsSize = suggestionList.size
+    lateinit var fileHistory: FileHistory
     lateinit var adapter: ArrayAdapter<String>
 
     constructor(context: Context):super(context)
@@ -50,7 +57,8 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     constructor(context: Context, attributeSet: AttributeSet, defStyleAttr: Int): super(context, attributeSet, defStyleAttr)
 
 
-    fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, settingsData: SettingsData, styler: Styler) {
+    fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, settingsData: SettingsData, styler: Styler, fileHistory: FileHistory) {
+        this.fileHistory = fileHistory
         this.settingsData = settingsData
         changeCodeCompletion(settingsData.codeCompletion)
         setTokenizer(CPlusPlusTokenizer())
@@ -84,6 +92,15 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
                 prevScrollY = scrollView.getScrollY().toFloat()
             }
         })
+        fileHistory.addChangeOccuredListener(object : FileHistory.ChangeOccured{
+            override fun onInsertHappen() {
+                fileHistoryUsed = true
+            }
+
+            override fun onChange(undoAvailable: Boolean, redoAvailable: Boolean) {
+//                fileHistoryUsed = true
+            }
+        })
         addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (fileChanged || delayStylerUpdate) {
                 fileChanged = false
@@ -96,6 +113,10 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
         addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                 Log.d("TextBefore", "$start, $count")
+                if (s == null)
+                    beforeLastChange = ""
+                else
+                    beforeLastChange = s.subSequence(start, start + count).toString()
             }
 
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
@@ -114,6 +135,10 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             }
 
             override fun afterTextChanged(s: Editable) {
+                if (!fileHistoryUsed) {
+                    fileHistory.addChange(TextChange(startChange, beforeLastChange, lastChange))
+                }
+                fileHistoryUsed = false
                 if (settingsData.autoIndent ) {
                     val indent = detectCurrentIndentation()
                     if (lastChange == "\n") {

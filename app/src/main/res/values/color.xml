@@ -15,6 +15,11 @@
 
     <color name="fastScrollActive">#1AFF8000</color>
 
+
+    <color name="itemNotActive">#A8A5A5</color>
+    <color name="itemActive">#FFFFFF</color>
+
+
     <color name="colorStatusBar">#3C3F41</color>
     <color name="darkula_background">#303030</color>
     <color name="darkula_text">#ABB7C5</color>

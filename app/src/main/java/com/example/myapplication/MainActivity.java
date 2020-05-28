@@ -3,14 +3,15 @@ package com.example.myapplication;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 
+import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.preference.PreferenceManager;
 import android.provider.OpenableColumns;
-import android.text.style.CharacterStyle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +33,7 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
+import com.example.myapplication.history.FileHistory;
 import com.example.myapplication.settings.SettingsData;
 import com.example.myapplication.utils.ConverterKt;
 import com.example.myapplication.views.FastScroll;
@@ -76,7 +78,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     private boolean highlightCode = true;
     private float prevScrollY = -1;
     private boolean newDataSet = false;
+    private FileHistory history = new FileHistory();
     private ArrayList<String> settingsChange = new ArrayList<>();
+    private MenuItem undoItem;
+    private MenuItem redoItem;
+
     public int countChar(String str, char c) {
         int count = 0;
 
@@ -111,7 +117,20 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         globalLayout = findViewById(R.id.global_layout);
 
         fileIO = new FileIO(this);
+        history.addChangeOccuredListener(new FileHistory.ChangeOccured() {
+            @Override
+            public void onInsertHappen() {
 
+            }
+
+            @Override
+            public void onChange(boolean undoAvailable, boolean redoAvailable) {
+                if (undoItem != null)
+                    menuItemChangeState(undoItem, undoAvailable);
+                if (redoItem != null)
+                    menuItemChangeState(redoItem, redoAvailable);
+            }
+        });
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
         settingsData = new SettingsData(this);
         settingsData.fromSharedPreferenses(pref);
@@ -142,20 +161,45 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             letters.addView(letter);
         }
         styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
-        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler);
+        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler, history);
     }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
+        undoItem = menu.findItem(R.id.undo);
+        redoItem = menu.findItem(R.id.redo);
+
+        menuItemChangeState(undoItem, false);
+        menuItemChangeState(redoItem, false);
+
         return true;
+    }
+
+    public void menuItemChangeState(MenuItem item, boolean enabled) {
+        Drawable d = item.getIcon();
+        d = d.mutate();
+        d = DrawableCompat.wrap(d);
+        item.setEnabled(enabled);
+        if (enabled)
+            DrawableCompat.setTint(d, getResources().getColor(R.color.itemActive));
+        else
+            DrawableCompat.setTint(d, getResources().getColor(R.color.itemNotActive));
+        item.setIcon(d);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.undo:
+               history.undo(codeEdit.getText());
+               break;
+            case R.id.redo:
+                history.redo(codeEdit.getText());
+                break;
+//                d.setTint();
 //            case R.id.wrap_content:
 //                word_wrap = !item.isChecked();
 //                if (word_wrap) {
@@ -168,6 +212,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 //                    wrapScroll.addView(codeEdit);
 //                }
 //                item.setChecked(!item.isChecked());
+//                break;
 //                break;
             case R.id.open_file:
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
