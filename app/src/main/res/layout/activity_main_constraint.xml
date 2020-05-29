@@ -9,6 +9,17 @@
     android:background="@color/darkula_background"
     >
 
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tabs"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="1dp"
+        android:elevation="3dp"
+        android:background="@color/colorSecondaryVariant"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.example.myapplication.views.FastScroll
         android:id="@+id/fast_scroll"
         android:layout_marginEnd="5dp"
@@ -67,7 +78,7 @@
         app:layout_constraintEnd_toEndOf="parent"
 
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/tabs">
 
         <LinearLayout
             android:id="@+id/main_layout"
@@ -96,6 +107,7 @@
                     android:layout_height="match_parent"
                     android:autoLink="none"
                     android:background="#303030"
+                    android:dropDownAnchor="@id/vertical_scroll"
                     android:fontFamily="@font/jetbrains_mono"
                     android:freezesText="true"
                     android:gravity="top"
@@ -103,12 +115,11 @@
                     android:inputType="text|textNoSuggestions|textMultiLine"
                     android:minLines="5"
                     android:padding="5dp"
+                    android:popupBackground="@color/darkula_background"
                     android:scrollbars="none"
                     android:textColor="#ABB7C5"
                     android:textSize="12sp"
                     android:typeface="monospace"
-                    android:dropDownAnchor="@id/vertical_scroll"
-                    android:popupBackground="@color/darkula_background"
                     tools:ignore="Autofill,LabelFor"
                     tools:text="1838383" />
             </HorizontalScrollView>

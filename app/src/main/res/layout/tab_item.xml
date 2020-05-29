@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout
+        android:id="@+id/tab_layout"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+
+        >
+
+        <TextView
+
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:padding="5dp"
+            android:textStyle="bold"
+            android:text="Test"
+            android:textColor="#F3F4F8"
+            android:textSize="14sp" />
+
+        <ImageView
+            android:id="@+id/close_tab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="close"
+            android:src="@drawable/ic_close_black_24dp"
+            android:tint="@color/colorPrimary" />
+
+    </LinearLayout>
+    <View
+        android:id="@+id/active_status"
+        android:layout_width="0dp"
+        android:layout_height="3dp"
+        android:layout_gravity="bottom"
+        android:layout_alignStart="@+id/tab_layout"
+        android:layout_alignEnd="@+id/tab_layout"
+        android:layout_alignBottom="@+id/tab_layout"
+
+
+        android:background="@color/colorPrimary"
+        android:layout_alignLeft="@+id/tab_layout"
+        android:layout_alignRight="@+id/tab_layout" />
+</RelativeLayout>

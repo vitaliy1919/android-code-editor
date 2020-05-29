@@ -27,12 +27,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.myapplication.Files.FileIO;
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
+import com.example.myapplication.adapters.TabsAdapter;
+import com.example.myapplication.databinding.ActivityMainBinding;
+import com.example.myapplication.databinding.ActivityMainConstraintBinding;
 import com.example.myapplication.history.FileHistory;
 import com.example.myapplication.settings.SettingsData;
 import com.example.myapplication.utils.ConverterKt;
@@ -51,6 +56,7 @@ import static com.example.myapplication.utils.ConverterKt.spToPx;
 public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     static final int REQUEST_OPEN_FILE = 1;
     private static final int REQUEST_CREATE_FILE = 2;
+    private ActivityMainConstraintBinding binding;
     private Uri currentlyOpenedFile = null;
     boolean word_wrap = false;
     private LinearLayout letters;
@@ -82,6 +88,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     private ArrayList<String> settingsChange = new ArrayList<>();
     private MenuItem undoItem;
     private MenuItem redoItem;
+    private RecyclerView tabs;
+    private TabsAdapter adapter;
 
     public int countChar(String str, char c) {
         int count = 0;
@@ -100,21 +108,28 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        handler = new Handler(getMainLooper());
-        setContentView(R.layout.activity_main_constraint);
+        binding = ActivityMainConstraintBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        codeEdit = findViewById(R.id.code_editor);
-        numbersView = findViewById(R.id.numbers_view);
+        codeEdit = binding.codeEditor;
+        numbersView = binding.numbersView;
         numbersView.initializeView(codeEdit);
-        wrapScroll = findViewById(R.id.wrap_horizontal_scroll);
-        mainLayout = findViewById(R.id.main_layout);
-        progressBar = findViewById(R.id.progress_bar);
+        wrapScroll = binding.wrapHorizontalScroll;
+        mainLayout = binding.mainLayout;
+        progressBar = binding.progressBar;
         highlighter = new CPlusPlusHighlighter(this);
-        fastScroll = findViewById(R.id.fast_scroll);
-        verticalScroll = findViewById(R.id.vertical_scroll);
+        fastScroll = binding.fastScroll;
+        verticalScroll = binding.verticalScroll;
         fastScroll.initialize(codeEdit, verticalScroll);
-        letters = findViewById(R.id.letters);
-        globalLayout = findViewById(R.id.global_layout);
+        letters = binding.letters;
+        globalLayout = binding.globalLayout;
+        tabs = binding.tabs;
+        tabs.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        adapter = new TabsAdapter();
+        adapter.getTabsNames().add("Test.js");
+        adapter.getTabsNames().add("Untitled.js");
+
+        tabs.setAdapter(adapter);
 
         fileIO = new FileIO(this);
         history.addChangeOccuredListener(new FileHistory.ChangeOccured() {
@@ -282,6 +297,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         returnCursor.moveToFirst();
         String fileName = returnCursor.getString(nameIndex);
         returnCursor.close();
+        adapter.addTab(fileName);
         getSupportActionBar().setSubtitle(fileName);
         if (requestCode == REQUEST_OPEN_FILE ) {
             progressBar.setVisibility(View.VISIBLE);
