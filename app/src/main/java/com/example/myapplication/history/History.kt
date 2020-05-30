@@ -1,7 +1,10 @@
 package com.example.myapplication.history
 
 import android.text.Editable
+import androidx.room.Entity
+import androidx.room.Ignore
 
+@Entity
 class FileHistory() {
     interface ChangeOccured {
         fun onChange(undoAvailable: Boolean, redoAvailable: Boolean)
@@ -9,7 +12,7 @@ class FileHistory() {
     }
 
 
-
+    @Ignore
     private var changeListeners: ArrayList<ChangeOccured> = ArrayList()
     private var changes: ArrayList<TextChange> = ArrayList()
     private var currentTop = 0

@@ -35,8 +35,8 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
+import com.example.myapplication.room.entities.TabData;
 import com.example.myapplication.adapters.TabsAdapter;
-import com.example.myapplication.databinding.ActivityMainBinding;
 import com.example.myapplication.databinding.ActivityMainConstraintBinding;
 import com.example.myapplication.history.FileHistory;
 import com.example.myapplication.settings.SettingsData;
@@ -126,9 +126,25 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         tabs = binding.tabs;
         tabs.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
         adapter = new TabsAdapter();
-        adapter.getTabsNames().add("Test.js");
-        adapter.getTabsNames().add("Untitled.js");
+//        adapter.getTabsNames().add("Test.js");
+//        ada pter.getTabsNames().add("Untitled.js");
+        adapter.addOnItemListener(new TabsAdapter.OnItemChange() {
+            @Override
+            public void onItemClosed(int position) {
 
+            }
+
+            @Override
+            public void onItemActive(int previousPosition, int position) {
+                if (position == previousPosition)
+                    return;
+                TabData data = adapter.get(position);
+                if (data.getFileUri() != null)
+                    openFile(data.getFileName(), data.getFileUri());
+                else
+                    codeEdit.updateText("");
+            }
+        });
         tabs.setAdapter(adapter);
 
         fileIO = new FileIO(this);
@@ -283,6 +299,26 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             "Belgium", "France", "Italy", "Germany", "Spain"
     };
 
+
+    private void openFile(String fileName, Uri fileURI) {
+        progressBar.setVisibility(View.VISIBLE);
+        Thread readFile = new Thread(() -> {
+            try {
+                String data1 = fileIO.openFile(fileURI);
+                runOnUiThread(() -> {
+                    newDataSet = true;
+                    codeEdit.updateText(data1);
+                    progressBar.setVisibility(View.INVISIBLE);
+                });
+            } catch (FileNotFoundException e) {
+                Snackbar.make(codeEdit, "File not found", Snackbar.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                Snackbar.make(codeEdit, "Error while opening file", Snackbar.LENGTH_SHORT).show();
+            }
+
+        });
+        readFile.start();
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -297,26 +333,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         returnCursor.moveToFirst();
         String fileName = returnCursor.getString(nameIndex);
         returnCursor.close();
-        adapter.addTab(fileName);
+        adapter.addTab(new TabData(fileName, fileURI));
+        adapter.setActive(adapter.getItemCount() - 1);
         getSupportActionBar().setSubtitle(fileName);
         if (requestCode == REQUEST_OPEN_FILE ) {
-            progressBar.setVisibility(View.VISIBLE);
-            Thread readFile = new Thread(() -> {
-                try {
-                    String data1 = fileIO.openFile(fileURI);
-                    runOnUiThread(() -> {
-                        newDataSet = true;
-                        codeEdit.updateText(data1);
-                        progressBar.setVisibility(View.INVISIBLE);
-                    });
-                } catch (FileNotFoundException e) {
-                    Snackbar.make(codeEdit, "File not found", Snackbar.LENGTH_SHORT).show();
-                } catch (IOException e) {
-                    Snackbar.make(codeEdit, "Error while opening file", Snackbar.LENGTH_SHORT).show();
-                }
-
-            });
-            readFile.start();
+            openFile(fileName, fileURI);
         } else if (requestCode == REQUEST_CREATE_FILE) {
             codeEdit.setText("");
         }

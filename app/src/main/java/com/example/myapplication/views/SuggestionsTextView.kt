@@ -38,6 +38,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     private var lastBracketSpan: CharacterStyle? = null
 
     var delayStylerUpdate = false
+    private var somethingEntered = false
     private var lastChange = ""
     private var beforeLastChange = ""
 
@@ -135,6 +136,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             }
 
             override fun afterTextChanged(s: Editable) {
+                somethingEntered = true
                 if (!fileHistoryUsed) {
                     fileHistory.addChange(TextChange(startChange, beforeLastChange, lastChange))
                 }
@@ -185,11 +187,12 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     override fun onSelectionChanged(selStart: Int, selEnd: Int) {
         super.onSelectionChanged(selStart, selEnd)
         if (this::highlighter.isInitialized) {
-            if (isPopupShowing)
+            if (isPopupShowing && !somethingEntered)
                 dismissDropDown()
             else
                 changePopupPosition()
         }
+        somethingEntered = false
         if (firstBracketSpan != null) {
             text.removeSpan(firstBracketSpan)
             firstBracketSpan = null
