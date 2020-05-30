@@ -22,11 +22,9 @@
 
     <com.example.myapplication.views.FastScroll
         android:id="@+id/fast_scroll"
-        android:layout_marginEnd="5dp"
-        android:layout_marginRight="5dp"
         android:layout_width="0dp"
-        android:elevation="2dp"
         android:layout_height="0dp"
+        android:elevation="12dp"
         app:layout_constraintBottom_toBottomOf="@+id/vertical_scroll"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/vertical_scroll" />

@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     private void openFile(String fileName, Uri fileURI) {
         progressBar.setVisibility(View.VISIBLE);
-        Thread readFile = new Thread(() -> {
+        AppExecutors.INSTANCE.getDiskIO().execute(()->{
             try {
                 String data1 = fileIO.openFile(fileURI);
                 runOnUiThread(() -> {
@@ -315,9 +315,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             } catch (IOException e) {
                 Snackbar.make(codeEdit, "Error while opening file", Snackbar.LENGTH_SHORT).show();
             }
-
         });
-        readFile.start();
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -333,7 +331,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         returnCursor.moveToFirst();
         String fileName = returnCursor.getString(nameIndex);
         returnCursor.close();
-        adapter.addTab(new TabData(fileName, fileURI));
+        adapter.addTab(new TabData(fileName, fileURI, ""));
         adapter.setActive(adapter.getItemCount() - 1);
         getSupportActionBar().setSubtitle(fileName);
         if (requestCode == REQUEST_OPEN_FILE ) {

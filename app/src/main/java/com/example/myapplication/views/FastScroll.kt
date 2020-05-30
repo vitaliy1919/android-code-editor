@@ -71,8 +71,8 @@ class FastScroll: View {
 
                 val state = codeEdit!!.height <= editScroll!!.height
                 if (state != isHidden) {
-                    invalidate()
                     isHidden = state
+                    invalidate()
                 }
             }
         })
@@ -83,7 +83,7 @@ class FastScroll: View {
             }
             val curScroll =  editScroll!!.scrollY
             val maxScroll = editScroll!!.getChildAt(0).height - editScroll!!.height
-            val percent = curScroll / maxScroll.toFloat()
+            val percent = if (maxScroll == 0) 0f else curScroll / maxScroll.toFloat()
             setPercentage(percent)
             Log.d("Percent", "$percent, ${curScroll}, ${maxScroll}, ${maxScroll - curScroll}".toString())
             invalidate()
@@ -113,7 +113,6 @@ class FastScroll: View {
                     return false;
                 }
                 stopScroll = true
-//                editScroll?.smoothScrollBy(0,0)
                 isActive = true
             }
             MotionEvent.ACTION_MOVE -> {
@@ -138,6 +137,9 @@ class FastScroll: View {
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+//        canvas?.drawRoundRect(RectF(0f,0f,10000f,10000f), 5f, 5f, paint)
+        canvas?.drawRoundRect(unactiveRect, 5f, 5f, paint)
+
         if (canvas != null && !isHidden) {
             if (isActive)
                 canvas.drawRoundRect(activeRect, 15f, 15f, paintActive)
