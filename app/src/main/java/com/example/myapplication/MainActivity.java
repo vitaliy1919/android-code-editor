@@ -53,7 +53,20 @@ import java.util.ArrayList;
 
 import static com.example.myapplication.utils.ConverterKt.spToPx;
 
-public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class MainActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener,FileHistory.ChangeOccured {
+    @Override
+    public void onChange(boolean undoAvailable, boolean redoAvailable) {
+        if (undoItem != null)
+            menuItemChangeState(undoItem, undoAvailable);
+        if (redoItem != null)
+            menuItemChangeState(redoItem, redoAvailable);
+    }
+
+    @Override
+    public void onInsertHappen() {
+
+    }
+
     static final int REQUEST_OPEN_FILE = 1;
     private static final int REQUEST_CREATE_FILE = 2;
     private ActivityMainConstraintBinding binding;
@@ -91,19 +104,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     private RecyclerView tabs;
     private TabsAdapter adapter;
 
-    public int countChar(String str, char c) {
-        int count = 0;
-
-        for (int i = 0; i < str.length(); i++) {
-            if (str.charAt(i) == c)
-                count++;
-        }
-
-        return count;
-    }
-
-
-
     private String symbols = "→;,.<>\"'={}&|!()+-*/[]#%^:_@?";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,36 +130,23 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 //        ada pter.getTabsNames().add("Untitled.js");
         adapter.addOnItemListener(new TabsAdapter.OnItemChange() {
             @Override
-            public void onItemClosed(int position) {
-
+            public void beforeItemClosed(int position) {
+//                saveAndCloseTab(position);
             }
 
             @Override
-            public void onItemActive(int previousPosition, int position) {
+            public void beforeItemActive(int previousPosition, int position, boolean closed) {
                 if (position == previousPosition)
                     return;
-                TabData data = adapter.get(position);
-                codeEdit.updateText(data.getInitialText());
-                codeEdit.setEnabled(false);
+                adapter.get(previousPosition).getFileHistory().unregister(MainActivity.this);
+                saveAndCloseTab(previousPosition);
+                openTab(position);
             }
         });
         tabs.setAdapter(adapter);
 
         fileIO = new FileIO(this);
-        history.addChangeOccuredListener(new FileHistory.ChangeOccured() {
-            @Override
-            public void onInsertHappen() {
 
-            }
-
-            @Override
-            public void onChange(boolean undoAvailable, boolean redoAvailable) {
-                if (undoItem != null)
-                    menuItemChangeState(undoItem, undoAvailable);
-                if (redoItem != null)
-                    menuItemChangeState(redoItem, redoAvailable);
-            }
-        });
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
         settingsData = new SettingsData(this);
         settingsData.fromSharedPreferenses(pref);
@@ -190,6 +177,9 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             letters.addView(letter);
         }
         styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
+        FileHistory history = adapter.get(adapter.getActivePosition()).getFileHistory();
+        this.history = history;
+        history.addChangeOccuredListener(this);
         codeEdit.initialize(highlighter, verticalScroll,settingsData, styler, history);
     }
 
@@ -272,10 +262,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             try {
                 String data1 = fileIO.openFile(fileURI);
                 runOnUiThread(() -> {
-                    adapter.addTab(new TabData(fileName, fileURI, data1));
+                    TabData tabData = new TabData(fileName, fileURI, data1);
+                    adapter.addTab(tabData);
                     adapter.setActive(adapter.getItemCount() - 1);
                     newDataSet = true;
-                    codeEdit.updateText(data1);
+//                    codeEdit.updateText(data1, tabData.getFileHistory());
                     progressBar.setVisibility(View.INVISIBLE);
                 });
             } catch (FileNotFoundException e) {
@@ -311,6 +302,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onPause() {
         super.onPause();
+        saveAndCloseTab(adapter.getActivePosition());
 //        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
 
     }
@@ -324,7 +316,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             settingsData.updateValue(key, sharedPreferences);
         }
         settingsChange.clear();
-//        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
     }
 
     public void changeWordWrap(boolean value) {
@@ -340,6 +331,22 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             mainLayout.addView(wrapScroll);
             wrapScroll.addView(codeEdit);
         }
+    }
+
+    public void saveAndCloseTab(int position) {
+        adapter.get(position).getFileHistory().unregister(this);
+        TabData prevData = adapter.get(position);
+        prevData.setInitialText(codeEdit.getText().toString());
+        prevData.setLineNumber(codeEdit.getCurrentLineNumber());
+    }
+
+    public void openTab(int position) {
+        TabData data = adapter.get(position);
+        FileHistory currentHistory = data.getFileHistory();
+        currentHistory.addChangeOccuredListener(MainActivity.this);
+        onChange(currentHistory.canUndo(), currentHistory.canRedo());
+        history = currentHistory;
+        codeEdit.updateText(data.getInitialText(), data.getFileHistory());
     }
 
     @Override

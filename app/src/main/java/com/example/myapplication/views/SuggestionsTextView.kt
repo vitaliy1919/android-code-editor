@@ -31,7 +31,7 @@ import com.example.myapplication.views.Tokenizer.CPlusPlusTokenizer
 import java.io.File
 import kotlin.math.max
 
-class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
+class SuggestionsTextView : AppCompatMultiAutoCompleteTextView, FileHistory.ChangeOccured {
 
     private lateinit var highlighter: CPlusPlusHighlighter
     private lateinit var scrollView: ScrollView
@@ -60,9 +60,16 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     constructor(context: Context, attributeSet: AttributeSet):super(context, attributeSet)
     constructor(context: Context, attributeSet: AttributeSet, defStyleAttr: Int): super(context, attributeSet, defStyleAttr)
 
+    override fun onChange(undoAvailable: Boolean, redoAvailable: Boolean) {
 
-    fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, settingsData: SettingsData, styler: Styler, fileHistory: FileHistory) {
-        this.fileHistory = fileHistory
+    }
+
+    override fun onInsertHappen() {
+        fileHistoryUsed = true
+    }
+
+    fun initialize(highlighter: CPlusPlusHighlighter, scroll: ScrollView, settingsData: SettingsData, styler: Styler, history: FileHistory) {
+        this.fileHistory = history
         this.settingsData = settingsData
         changeCodeCompletion(settingsData.codeCompletion)
         setTokenizer(CPlusPlusTokenizer())
@@ -96,15 +103,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
                 prevScrollY = scrollView.getScrollY().toFloat()
             }
         })
-        fileHistory.addChangeOccuredListener(object : FileHistory.ChangeOccured{
-            override fun onInsertHappen() {
-                fileHistoryUsed = true
-            }
-
-            override fun onChange(undoAvailable: Boolean, redoAvailable: Boolean) {
-//                fileHistoryUsed = true
-            }
-        })
+        fileHistory.addChangeOccuredListener(this)
         addOnLayoutChangeListener { v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (fileChanged || delayStylerUpdate) {
                 fileChanged = false
@@ -140,7 +139,7 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
 
             override fun afterTextChanged(s: Editable) {
                 somethingEntered = true
-                if (!fileHistoryUsed) {
+                if (!fileHistoryUsed && !fileChanged) {
                     fileHistory.addChange(TextChange(startChange, beforeLastChange, lastChange))
                 }
                 fileHistoryUsed = false
@@ -235,7 +234,10 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
         }
     }
 
-    fun updateText(s: CharSequence) {
+    fun updateText(s: CharSequence, history: FileHistory) {
+        this.fileHistory.unregister(this)
+        this.fileHistory = history
+        fileHistory.addChangeOccuredListener(this)
         isEnabled = false
         fileChanged = true
         setText(s)
@@ -250,6 +252,18 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             }
     }
 
+    fun getCurrentLineNumber():Int {
+        if (layout == null)
+            return 0
+        if (!settingsData.wordWrap)
+            return layout.getLineForOffset(selectionStart)
+        var newLineCharNumber = 0
+        for (line in 0 until layout.getLineForOffset(selectionStart)) {
+            if (text[layout.getLineEnd(line)-1] == '\n')
+                newLineCharNumber++
+        }
+        return newLineCharNumber
+    }
     fun changeSyntaxHighlight(value: Boolean) {
         if (this::highlighter.isInitialized) {
             if (!value) {

@@ -46,34 +46,39 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
         return tabsNames[position]
     }
     fun setActive(position: Int) {
+        for (listener in onItemChangeListeners)
+            listener.beforeItemActive(activePosition, position, false)
         val prevPosition = activePosition
         activePosition = position
         notifyDataSetChanged()
-        for (listener in onItemChangeListeners)
-            listener.onItemActive(prevPosition, position)
+
     }
     fun getActive(): Int {
         return activePosition
     }
     fun removeTab(index: Int) {
         for (listener in onItemChangeListeners)
-            listener.onItemClosed(index)
+            listener.beforeItemClosed(index)
         if (tabsNames.size == 1) {
             tabsNames[0] = initialTab
             notifyItemChanged(0);
             return
         }
+        for (listener in onItemChangeListeners)
+            listener.beforeItemActive(activePosition, index - 1, true)
         tabsNames.removeAt(index)
         if (index == activePosition)
             activePosition = index - 1
         notifyItemRemoved(index);
         notifyItemRangeChanged(index, tabsNames.size);
         notifyDataSetChanged()
+
+
     }
 
     interface OnItemChange {
-        fun onItemClosed(position: Int)
-        fun onItemActive(prevPosition: Int, position: Int)
+        fun beforeItemClosed(position: Int)
+        fun beforeItemActive(prevPosition: Int, position: Int, tabClosed: Boolean)
     }
 
     class TabViewHolder(var view: View, var adapter: TabsAdapter): RecyclerView.ViewHolder(view) {

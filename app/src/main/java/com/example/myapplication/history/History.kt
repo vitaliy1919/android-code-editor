@@ -22,6 +22,10 @@ class FileHistory() {
         changeListeners.add(listener)
     }
 
+    fun unregister(listener: ChangeOccured) {
+        changeListeners.remove(listener)
+    }
+
     fun addChange(change: TextChange) {
         if (currentTop == changes.size)
             changes.add(change)
