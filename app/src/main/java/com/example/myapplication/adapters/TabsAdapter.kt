@@ -46,10 +46,11 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
         return tabsNames[position]
     }
     fun setActive(position: Int) {
-        for (listener in onItemChangeListeners)
-            listener.onItemActive(activePosition, position)
+        val prevPosition = activePosition
         activePosition = position
         notifyDataSetChanged()
+        for (listener in onItemChangeListeners)
+            listener.onItemActive(prevPosition, position)
     }
     fun getActive(): Int {
         return activePosition

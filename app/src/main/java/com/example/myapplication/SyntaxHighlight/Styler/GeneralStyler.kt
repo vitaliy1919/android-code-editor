@@ -43,7 +43,8 @@ class GeneralStyler(view: EditText, highlighter: Highlighter, scheme: ColorSchem
 
 
     private fun colorLines(view: EditText, highlighter: Highlighter, firstVisibleLine: Int, lastVisibleLine: Int) {
-
+            if (!highlighter.isResultReady)
+                return
             val startTime = System.currentTimeMillis()
             val startCharacter = view.layout.getLineStart(firstVisibleLine)
             val endCharacter = view.layout.getLineEnd(lastVisibleLine)

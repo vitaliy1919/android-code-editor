@@ -10,8 +10,9 @@ data class TabData(
         var fileName: String,
         var fileUri: Uri?,
         var initialText: String,
+        var lineNumber: Int,
         @Embedded
         var fileHistory: FileHistory) {
     @Ignore
-    constructor(fileName: String, fileUri: Uri? = null, initialText: String = ""):this(0, fileName, fileUri, initialText, FileHistory())
+    constructor(fileName: String, fileUri: Uri? = null, initialText: String = ""):this(0, fileName, fileUri, initialText, 0, FileHistory())
 }

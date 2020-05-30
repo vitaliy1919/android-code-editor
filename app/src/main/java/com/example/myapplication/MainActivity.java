@@ -139,10 +139,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 if (position == previousPosition)
                     return;
                 TabData data = adapter.get(position);
-                if (data.getFileUri() != null)
-                    openFile(data.getFileName(), data.getFileUri());
-                else
-                    codeEdit.updateText("");
+                codeEdit.updateText(data.getInitialText());
+                codeEdit.setEnabled(false);
             }
         });
         tabs.setAdapter(adapter);
@@ -230,21 +228,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             case R.id.redo:
                 history.redo(codeEdit.getText());
                 break;
-//                d.setTint();
-//            case R.id.wrap_content:
-//                word_wrap = !item.isChecked();
-//                if (word_wrap) {
-//                    wrapScroll.removeView(codeEdit);
-//                    mainLayout.removeView(wrapScroll);
-//                    mainLayout.addView(codeEdit);
-//                } else {
-//                    mainLayout.removeView(codeEdit);
-//                    mainLayout.addView(wrapScroll);
-//                    wrapScroll.addView(codeEdit);
-//                }
-//                item.setChecked(!item.isChecked());
-//                break;
-//                break;
             case R.id.open_file:
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -275,19 +258,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                     startActivityForResult(createFileIntent, REQUEST_CREATE_FILE);
                 }
                 break;
-//            case R.id.highlight_code:
-//                highlightCode = !item.isChecked();
-//                if (!highlightCode) {
-//                    highlighter.parse(codeEdit.getText());
-//                } else {
-//                    Object spansToRemove[] = codeEdit.getText().getSpans(0, codeEdit.getLayout().getLineEnd(codeEdit.getLineCount() - 1), Object.class);
-//                    for (Object span : spansToRemove) {
-//                        if (span instanceof CharacterStyle)
-//                            codeEdit.getText().removeSpan(span);
-//                    }
-//                }
-//                item.setChecked(!item.isChecked());
-//                break;
             case R.id.settings_action:
                 Intent settingIntent = new Intent(this , SettingsActivity.class);
                 startActivity(settingIntent);
@@ -295,10 +265,6 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         }
         return true;
     }
-    private static final String[] COUNTRIES = new String[] {
-            "Belgium", "France", "Italy", "Germany", "Spain"
-    };
-
 
     private void openFile(String fileName, Uri fileURI) {
         progressBar.setVisibility(View.VISIBLE);
@@ -306,6 +272,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             try {
                 String data1 = fileIO.openFile(fileURI);
                 runOnUiThread(() -> {
+                    adapter.addTab(new TabData(fileName, fileURI, data1));
+                    adapter.setActive(adapter.getItemCount() - 1);
                     newDataSet = true;
                     codeEdit.updateText(data1);
                     progressBar.setVisibility(View.INVISIBLE);
@@ -331,8 +299,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         returnCursor.moveToFirst();
         String fileName = returnCursor.getString(nameIndex);
         returnCursor.close();
-        adapter.addTab(new TabData(fileName, fileURI, ""));
-        adapter.setActive(adapter.getItemCount() - 1);
+
         getSupportActionBar().setSubtitle(fileName);
         if (requestCode == REQUEST_OPEN_FILE ) {
             openFile(fileName, fileURI);

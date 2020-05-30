@@ -5,6 +5,8 @@ import com.example.myapplication.SyntaxHighlight.Tokens.Token
 import com.example.myapplication.SyntaxHighlight.Tokens.TokenList
 
 abstract class Highlighter {
+    @Volatile
+    var isResultReady: Boolean = false
     var tokens:ArrayList<Token> = ArrayList()
     abstract fun brackets(): ArrayList<BracketToken>
 

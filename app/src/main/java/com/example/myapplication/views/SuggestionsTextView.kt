@@ -2,6 +2,8 @@ package com.example.myapplication.views
 
 import android.content.Context
 import android.graphics.Color
+import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.Spanned
 import android.text.TextWatcher
@@ -16,6 +18,7 @@ import android.widget.ScrollView
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatMultiAutoCompleteTextView
 import androidx.core.content.ContextCompat
+import com.example.myapplication.AppExecutors
 import com.example.myapplication.R
 import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter
 import com.example.myapplication.SyntaxHighlight.Styler.Styler
@@ -129,9 +132,9 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
                     highlighter.update(s, start, start + count, count - before, selectionStart)
                     updateIdentifiersTokens(highlighter.identifiers())
                     if (layout != null) {
-                        delayStylerUpdate = true
                         styler.updateStyling(prevScrollY.toInt(), scroll.height)
-                    }
+                    } else
+                        delayStylerUpdate = true
                 }
             }
 
@@ -192,6 +195,8 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
             else
                 changePopupPosition()
         }
+        if (!isEnabled || (this::settingsData.isInitialized && !settingsData.codeHighlighting))
+            return
         somethingEntered = false
         if (firstBracketSpan != null) {
             text.removeSpan(firstBracketSpan)
@@ -231,10 +236,18 @@ class SuggestionsTextView : AppCompatMultiAutoCompleteTextView {
     }
 
     fun updateText(s: CharSequence) {
+        isEnabled = false
         fileChanged = true
         setText(s)
         if (this::settingsData.isInitialized && settingsData.codeHighlighting)
-            highlighter.parse(s)
+            AppExecutors.diskIO.execute {
+                highlighter.parse(s)
+                Handler(Looper.getMainLooper()).post{
+                    isEnabled = true
+                    if (!fileChanged)
+                        styler.updateStyling(scrollView.scrollY, scrollView.height)
+                }
+            }
     }
 
     fun changeSyntaxHighlight(value: Boolean) {

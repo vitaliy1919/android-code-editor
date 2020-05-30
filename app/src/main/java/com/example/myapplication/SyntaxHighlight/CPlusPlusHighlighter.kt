@@ -107,6 +107,7 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
         return Pair(position, indent)
     }
     override fun parse(s: CharSequence) {
+        isResultReady = false
         tokens.clear()
         tokenIdentifiers.clear()
         tokenBrackets.clear()
@@ -118,6 +119,8 @@ class CPlusPlusHighlighter(val context: Context):Highlighter() {
             position = result.first
             indentationLevel = result.second
         }
+        isResultReady = true
+
     }
     override fun update(s: CharSequence, start: Int, end: Int, offset: Int, cursor: Int) {
         val startTime = System.currentTimeMillis()
