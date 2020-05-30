@@ -10,7 +10,7 @@ interface TabDao {
     fun findAll():List<TabData>
 
     @Insert
-    fun insertTab(tab: TabData)
+    fun insertTab(tab: TabData):Long
     @Update
     fun updateTab(tab: TabData)
     @Delete

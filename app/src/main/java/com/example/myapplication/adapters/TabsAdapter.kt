@@ -1,5 +1,6 @@
 package com.example.myapplication.adapters
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,6 +16,15 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
     var onItemChangeListeners: ArrayList<OnItemChange> = ArrayList()
     var activePosition = 0;
 
+
+    fun setNewDataSet(dataset: ArrayList<TabData>) {
+        if (dataset.isEmpty()) {
+            Log.d("Adapter","A new dataset is empty")
+            tabsNames = ArrayList(arrayListOf(initialTab))
+            return
+        }
+        tabsNames = dataset
+    }
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TabViewHolder {
         val rootView = LayoutInflater.from(parent.context).inflate(R.layout.tab_item, parent, false)
         return TabViewHolder(rootView, this)

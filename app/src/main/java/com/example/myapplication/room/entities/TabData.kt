@@ -6,7 +6,7 @@ import com.example.myapplication.history.FileHistory
 
 @Entity
 data class TabData(
-        @PrimaryKey(autoGenerate = true) var id: Int,
+        @PrimaryKey(autoGenerate = true) var id: Long,
         var fileName: String,
         var fileUri: Uri?,
         var initialText: String,

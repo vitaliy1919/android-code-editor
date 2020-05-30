@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 
+import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.preference.PreferenceManager;
 import android.provider.OpenableColumns;
@@ -35,6 +36,9 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
+import com.example.myapplication.room.AppDatabase;
+import com.example.myapplication.room.AppDatabaseKt;
+import com.example.myapplication.room.dao.TabDao;
 import com.example.myapplication.room.entities.TabData;
 import com.example.myapplication.adapters.TabsAdapter;
 import com.example.myapplication.databinding.ActivityMainConstraintBinding;
@@ -45,11 +49,13 @@ import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 import com.example.myapplication.views.ScrollViewFlingCallback;
 import com.example.myapplication.views.SuggestionsTextView;
+import com.facebook.stetho.Stetho;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.example.myapplication.utils.ConverterKt.spToPx;
 
@@ -108,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Stetho.initializeWithDefaults(this);
         binding = ActivityMainConstraintBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -118,6 +125,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         mainLayout = binding.mainLayout;
         progressBar = binding.progressBar;
         highlighter = new CPlusPlusHighlighter(this);
+        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
+
         fastScroll = binding.fastScroll;
         verticalScroll = binding.verticalScroll;
         fastScroll.initialize(codeEdit, verticalScroll);
@@ -125,6 +134,11 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         globalLayout = binding.globalLayout;
         tabs = binding.tabs;
         tabs.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
+        settingsData = new SettingsData(this);
+        settingsData.fromSharedPreferenses(pref);
+        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+
         adapter = new TabsAdapter();
 //        adapter.getTabsNames().add("Test.js");
 //        ada pter.getTabsNames().add("Untitled.js");
@@ -132,12 +146,18 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             @Override
             public void beforeItemClosed(int position) {
 //                saveAndCloseTab(position);
+                TabData data = adapter.get(position);
+                AppExecutors.INSTANCE.getDbIO().execute(()-> {
+                    TabDao dao = AppDatabaseKt.getInstance(MainActivity.this).tabDao();
+                    dao.deleteTab(data);
+                });
             }
 
             @Override
             public void beforeItemActive(int previousPosition, int position, boolean closed) {
                 if (position == previousPosition)
                     return;
+                pref.edit().putInt("active", position).apply();
                 adapter.get(previousPosition).getFileHistory().unregister(MainActivity.this);
                 saveAndCloseTab(previousPosition);
                 openTab(position);
@@ -147,10 +167,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         fileIO = new FileIO(this);
 
-        SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
-        settingsData = new SettingsData(this);
-        settingsData.fromSharedPreferenses(pref);
-        PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
+        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler, history);
+
 
         for (int i = 0; i < symbols.length(); i++) {
             TextView letter = new TextView(this);
@@ -176,11 +194,26 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             });
             letters.addView(letter);
         }
-        styler = new GeneralStyler(codeEdit, highlighter,new GeneralColorScheme());
-        FileHistory history = adapter.get(adapter.getActivePosition()).getFileHistory();
-        this.history = history;
-        history.addChangeOccuredListener(this);
-        codeEdit.initialize(highlighter, verticalScroll,settingsData, styler, history);
+
+        progressBar.setVisibility(View.VISIBLE);
+        AppExecutors.INSTANCE.getDbIO().execute(()->{
+            TabDao dao = AppDatabaseKt.getInstance(MainActivity.this).tabDao();
+            List<TabData> recents =  dao.findAll();
+            int activePosition = pref.getInt("active", 0);
+            adapter.setNewDataSet(new ArrayList<>(recents));
+            if (activePosition >= adapter.getItemCount())
+                activePosition = adapter.getItemCount() - 1;
+            final int aPos = activePosition;
+            runOnUiThread(()->{
+                adapter.setActive(aPos);
+                progressBar.setVisibility(View.INVISIBLE);
+            });
+
+//            FileHistory history = adapter.get(adapter.getActivePosition()).getFileHistory();
+//            this.history = history;
+//            history.addChangeOccuredListener(this);
+        });
+
     }
 
 
@@ -302,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onPause() {
         super.onPause();
-        saveAndCloseTab(adapter.getActivePosition());
+        saveTab(adapter.getActivePosition());
 //        PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
 
     }
@@ -335,9 +368,20 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
     public void saveAndCloseTab(int position) {
         adapter.get(position).getFileHistory().unregister(this);
+        saveTab(position);
+    }
+    public void saveTab(int position) {
         TabData prevData = adapter.get(position);
         prevData.setInitialText(codeEdit.getText().toString());
         prevData.setLineNumber(codeEdit.getCurrentLineNumber());
+        AppExecutors.INSTANCE.getDbIO().execute(()->{
+            TabDao dao = AppDatabaseKt.getInstance(MainActivity.this).tabDao();
+            if (prevData.getId() != 0) {
+                dao.updateTab(prevData);
+            } else
+                prevData.setId(dao.insertTab(prevData));
+        });
+
     }
 
     public void openTab(int position) {

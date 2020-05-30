@@ -13,9 +13,9 @@ class FileHistory() {
 
 
     @Ignore
-    private var changeListeners: ArrayList<ChangeOccured> = ArrayList()
-    private var changes: ArrayList<TextChange> = ArrayList()
-    private var currentTop = 0
+    var changeListeners: ArrayList<ChangeOccured> = ArrayList()
+    var changes: ArrayList<TextChange> = ArrayList()
+    var currentTop = 0
 
 
     fun addChangeOccuredListener(listener: ChangeOccured) {
