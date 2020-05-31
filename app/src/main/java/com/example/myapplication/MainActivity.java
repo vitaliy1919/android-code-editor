@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Stetho.initializeWithDefaults(this);
+//        Stetho.initializeWithDefaults(this);
         binding = ActivityMainConstraintBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -155,12 +155,25 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
             @Override
             public void beforeItemActive(int previousPosition, int position, boolean closed) {
-                if (position == previousPosition)
+                if (position == previousPosition) {
                     return;
+                }
                 pref.edit().putInt("active", position).apply();
-                adapter.get(previousPosition).getFileHistory().unregister(MainActivity.this);
-                saveAndCloseTab(previousPosition);
+                if (previousPosition != -1) {
+                    adapter.get(previousPosition).getFileHistory().unregister(MainActivity.this);
+
+                    if (!closed) {
+                        saveAndCloseTab(previousPosition);
+                    }
+                }
                 openTab(position);
+            }
+
+            @Override
+            public void afterItemActive(int prevPosition, int position, boolean tabClosed) {
+                if (position == prevPosition && tabClosed) {
+                    openTab(position);
+                }
             }
         });
         tabs.setAdapter(adapter);

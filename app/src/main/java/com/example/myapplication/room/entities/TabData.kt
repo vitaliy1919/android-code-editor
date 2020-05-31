@@ -12,7 +12,7 @@ data class TabData(
         var initialText: String,
         var lineNumber: Int,
         @Embedded
-        var fileHistory: FileHistory) {
+        var fileHistory: FileHistory):Cloneable {
     @Ignore
     constructor(fileName: String, fileUri: Uri? = null, initialText: String = ""):this(0, fileName, fileUri, initialText, 0, FileHistory())
 }

@@ -30,8 +30,11 @@ class FileHistory() {
         if (currentTop == changes.size)
             changes.add(change)
         else {
-            changes.subList(currentTop, changes.size).clear()
-            changes.add(change)
+            if (currentTop < changes.size) {
+                changes.subList(currentTop, changes.size).clear()
+                changes.add(change)
+            } else
+                currentTop = -1
         }
         currentTop++
         for (listener in changeListeners)
@@ -39,9 +42,9 @@ class FileHistory() {
 
     }
 
-    fun canUndo() = currentTop != 0
+    fun canUndo() = currentTop >=0 && currentTop <= changes.size && currentTop != 0
 
-    fun canRedo() = currentTop != changes.size
+    fun canRedo() = currentTop >=0 && currentTop <= changes.size && currentTop != changes.size
 
     fun undo(s: Editable) {
         if (canUndo()) {
@@ -73,4 +76,4 @@ class FileHistory() {
 
 }
 
-class TextChange(var start: Int, var oldText: CharSequence, var newText: CharSequence)
+class TextChange(var start: Int, var oldText: String, var newText: String)
