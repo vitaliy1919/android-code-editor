@@ -9,12 +9,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 
-import androidx.appcompat.widget.AppCompatEditText;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.preference.PreferenceManager;
 import android.provider.OpenableColumns;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
@@ -36,9 +36,10 @@ import com.example.myapplication.SyntaxHighlight.CPlusPlusHighlighter;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralColorScheme;
 import com.example.myapplication.SyntaxHighlight.Styler.GeneralStyler;
 import com.example.myapplication.SyntaxHighlight.Styler.Styler;
-import com.example.myapplication.room.AppDatabase;
 import com.example.myapplication.room.AppDatabaseKt;
+import com.example.myapplication.room.dao.RecentFilesDao;
 import com.example.myapplication.room.dao.TabDao;
+import com.example.myapplication.room.entities.RecentFile;
 import com.example.myapplication.room.entities.TabData;
 import com.example.myapplication.adapters.TabsAdapter;
 import com.example.myapplication.databinding.ActivityMainConstraintBinding;
@@ -49,13 +50,13 @@ import com.example.myapplication.views.FastScroll;
 import com.example.myapplication.views.NumbersView;
 import com.example.myapplication.views.ScrollViewFlingCallback;
 import com.example.myapplication.views.SuggestionsTextView;
-import com.facebook.stetho.Stetho;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 import static com.example.myapplication.utils.ConverterKt.spToPx;
 
@@ -74,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
     }
 
     static final int REQUEST_OPEN_FILE = 1;
+    private static final int RECENTS_SIZE = 10;
     private static final int REQUEST_CREATE_FILE = 2;
     private ActivityMainConstraintBinding binding;
     private Uri currentlyOpenedFile = null;
@@ -133,20 +135,22 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         letters = binding.letters;
         globalLayout = binding.globalLayout;
         tabs = binding.tabs;
-        tabs.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        tabs.setLayoutManager(layoutManager);
         SharedPreferences pref =  PreferenceManager.getDefaultSharedPreferences(this);
         settingsData = new SettingsData(this);
         settingsData.fromSharedPreferenses(pref);
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
-        adapter = new TabsAdapter();
+        adapter = new TabsAdapter(layoutManager);
 //        adapter.getTabsNames().add("Test.js");
 //        ada pter.getTabsNames().add("Untitled.js");
         adapter.addOnItemListener(new TabsAdapter.OnItemChange() {
             @Override
-            public void beforeItemClosed(int position) {
+            public void beforeItemClosed(int position, boolean onlyTab) {
 //                saveAndCloseTab(position);
                 TabData data = adapter.get(position);
+
                 AppExecutors.INSTANCE.getDbIO().execute(()-> {
                     TabDao dao = AppDatabaseKt.getInstance(MainActivity.this).tabDao();
                     dao.deleteTab(data);
@@ -170,8 +174,8 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             }
 
             @Override
-            public void afterItemActive(int prevPosition, int position, boolean tabClosed) {
-                if (position == prevPosition && tabClosed) {
+            public void afterItemActive(int prevPosition, int position, boolean onlyTabClosed) {
+                if (onlyTabClosed) {
                     openTab(position);
                 }
             }
@@ -238,7 +242,25 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         menuItemChangeState(undoItem, false);
         menuItemChangeState(redoItem, false);
-
+        AppDatabaseKt.getInstance(this).recentFileDao().findAllLiveData().observe(this, (recentFiles) -> {
+            MenuItem item = menu.findItem(R.id.recents);
+            SubMenu subMenu = item.getSubMenu();
+            subMenu.removeGroup(100);
+            int iter = 0;
+            if (recentFiles.size() > RECENTS_SIZE) {
+                recentFiles.subList(0, recentFiles.size() - RECENTS_SIZE).clear();
+            }
+            ListIterator<RecentFile> filesIterator = recentFiles.listIterator(recentFiles.size());
+            while (filesIterator.hasPrevious()) {
+                RecentFile file = filesIterator.previous();
+                MenuItem i = subMenu.add(100, 100+ iter, iter, file.getFileName());
+                i.setOnMenuItemClickListener((menuItem)->{
+                    openFile(file.getFileName(), file.getFileUri());
+                    return true;
+                });
+                iter++;
+            }
+        });
         return true;
     }
 
@@ -298,12 +320,27 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 Intent settingIntent = new Intent(this , SettingsActivity.class);
                 startActivity(settingIntent);
                 break;
+            case R.id.clear_recents:
+                AppExecutors.INSTANCE.getDbIO().execute(()->{
+                    AppDatabaseKt.getInstance(MainActivity.this).recentFileDao().removeAll();
+                });
         }
         return true;
     }
 
     private void openFile(String fileName, Uri fileURI) {
         progressBar.setVisibility(View.VISIBLE);
+        AppExecutors.INSTANCE.getDbIO().execute(()->{
+            RecentFilesDao dao = AppDatabaseKt.getInstance(MainActivity.this).recentFileDao();
+            List<RecentFile> files = dao.findAll();
+            for (RecentFile f: files) {
+                if (f.getFileName().equals(fileName)) {
+                    dao.remove(f);
+                    break;
+                }
+            }
+            dao.insert(new RecentFile(0, fileName, fileURI));
+        });
         AppExecutors.INSTANCE.getDiskIO().execute(()->{
             try {
                 String data1 = fileIO.openFile(fileURI);

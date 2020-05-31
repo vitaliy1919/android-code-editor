@@ -6,12 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.R
 import com.example.myapplication.history.FileHistory
 import com.example.myapplication.room.entities.TabData
+import kotlin.math.max
 
-class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
+class TabsAdapter(var layoutManager: LinearLayoutManager): RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
     val initialTab = TabData("Untitled")
     var tabsNames: ArrayList<TabData> = ArrayList(arrayListOf(initialTab.copy(fileHistory = FileHistory())))
     var onItemChangeListeners: ArrayList<OnItemChange> = ArrayList()
@@ -63,6 +65,7 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
         val prevPosition = activePosition
         activePosition = position
         notifyDataSetChanged()
+        layoutManager.scrollToPositionWithOffset(activePosition,0)
         for (listener in onItemChangeListeners)
             listener.afterItemActive(prevPosition, position, false)
     }
@@ -71,7 +74,8 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
     }
     fun removeTab(index: Int) {
         for (listener in onItemChangeListeners)
-            listener.beforeItemClosed(index)
+            listener.beforeItemClosed(index, tabsNames.size == 1)
+
         if (tabsNames.size == 1) {
             for (listener in onItemChangeListeners)
                 listener.beforeItemActive(0, 0, true)
@@ -81,13 +85,14 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
             notifyItemChanged(0);
             return
         }
+        val nextActivePosition = if (index == activePosition) max(index - 1,0) else activePosition
+
         for (listener in onItemChangeListeners)
-            listener.beforeItemActive(activePosition, index - 1, true)
+            listener.beforeItemActive(activePosition, nextActivePosition, true)
         tabsNames.removeAt(index)
         for (listener in onItemChangeListeners)
-            listener.afterItemActive(activePosition, index - 1, true)
-        if (index == activePosition)
-            activePosition = index - 1
+            listener.afterItemActive(activePosition, nextActivePosition, false)
+        activePosition = nextActivePosition
         notifyItemRemoved(index);
         notifyItemRangeChanged(index, tabsNames.size);
         notifyDataSetChanged()
@@ -96,7 +101,7 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
     }
 
     interface OnItemChange {
-        fun beforeItemClosed(position: Int)
+        fun beforeItemClosed(position: Int, onlyTab: Boolean)
         fun beforeItemActive(prevPosition: Int, position: Int, tabClosed: Boolean)
         fun afterItemActive(prevPosition: Int, position: Int, tabClosed: Boolean)
     }
@@ -119,6 +124,7 @@ class TabsAdapter: RecyclerView.Adapter<TabsAdapter.TabViewHolder>() {
                 adapter.setActive(adapterPosition)
             }
             close.setOnClickListener {
+                Log.d("Position", adapterPosition.toString())
                 adapter.removeTab(adapterPosition)
             }
         }

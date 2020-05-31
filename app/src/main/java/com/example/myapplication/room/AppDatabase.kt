@@ -2,7 +2,9 @@ package com.example.myapplication.room
 
 import android.content.Context
 import androidx.room.*
+import com.example.myapplication.room.dao.RecentFilesDao
 import com.example.myapplication.room.dao.TabDao
+import com.example.myapplication.room.entities.RecentFile
 import com.example.myapplication.room.entities.TabData
 
 //abstract class Database: RoomDatabase() {
@@ -27,10 +29,12 @@ fun getInstance(context: Context): AppDatabase? {
     return instance
 }
 
-@Database(entities = [TabData::class],exportSchema = false, version = 1)
+@Database(entities = [TabData::class, RecentFile::class],exportSchema = false, version = 2)
 @TypeConverters(Converters::class)
 abstract class AppDatabase: RoomDatabase() {
 
 
     abstract fun tabDao(): TabDao;
+    abstract fun recentFileDao(): RecentFilesDao;
+
 }

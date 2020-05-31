@@ -23,6 +23,14 @@
             <item android:id="@+id/open_file"
                 android:title="Open file"
                 android:icon="@drawable/ic_folder_open_black_24dp"/>
+            <item android:id="@+id/recents"
+                android:title="Open Recent">
+                <menu>
+                    <item android:id="@+id/clear_recents"
+                        android:title="Clear Recents"
+                        android:icon="@drawable/ic_clear_all_black_24dp"/>
+                </menu>
+            </item>>
             <item android:id="@+id/save_file"
                 android:title="Save file"
                 android:icon="@drawable/ic_save_black_24dp"/>
