@@ -16,7 +16,7 @@
             android:layout_height="match_parent"
             android:fillViewport="true"
             android:scrollbars="none"
-            tools:context=".MainActivity">
+            tools:context="ua.codeedit.codeedit.MainActivity">
 
             <LinearLayout
                 android:id="@+id/main_layout"
@@ -25,7 +25,7 @@
                 android:orientation="horizontal"
                 android:background="#303030"
                 android:layout_gravity = "top">
-                <com.example.myapplication.views.NumbersView
+                <ua.vitdmit.codeedit.views.NumbersView
                     android:id="@+id/numbers_view"
                     android:background="#313335"
                     android:layout_width="wrap_content"
@@ -33,7 +33,7 @@
                     android:layout_margin="5dp"
                     >
 
-                </com.example.myapplication.views.NumbersView>
+                </ua.vitdmit.codeedit.views.NumbersView>
                 <View
                     android:layout_height="match_parent"
                     android:layout_width="0.1sp"
@@ -71,7 +71,7 @@
 
         </ScrollView>
 
-    <com.example.myapplication.views.FastScroll
+    <ua.vitdmit.codeedit.views.FastScroll
         android:id="@+id/fast_scroll"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

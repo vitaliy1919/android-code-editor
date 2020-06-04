@@ -1,4 +1,4 @@
-package com.example.myapplication;
+package ua.codeedit.codeedit;
 
 import android.content.Context;
 
