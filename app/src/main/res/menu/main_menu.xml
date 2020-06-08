@@ -1,51 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <item
         android:id="@+id/undo"
+        android:icon="@drawable/ic_undo_black_24dp"
         android:title="Undo"
-        android:icon = "@drawable/ic_undo_black_24dp"
-        app:showAsAction="always"
-        />
+        app:showAsAction="always" />
     <item
         android:id="@+id/redo"
+        android:icon="@drawable/ic_redo_black_24dp"
         android:title="Redo"
-        android:icon = "@drawable/ic_redo_black_24dp"
         app:showAsAction="always"
+
         />
-    <item android:icon="@drawable/ic_more_vert_24px"
+    <item
+        android:icon="@drawable/ic_more_vert_24px"
         android:title=""
         app:showAsAction="always">
         <menu>
-            <item android:id="@+id/create_file"
-                android:title="New File"
-                android:icon="@drawable/ic_add_black_24dp" />
-            <item android:id="@+id/open_file"
-                android:title="Open file"
-                android:icon="@drawable/ic_folder_open_black_24dp"/>
-            <item android:id="@+id/recents"
+
+            <item
+                android:id="@+id/create_file"
+                android:icon="@drawable/ic_add_black_24dp"
+                android:title="New File" />
+            <item
+                android:id="@+id/open_file"
+                android:icon="@drawable/ic_folder_open_black_24dp"
+                android:title="Open file" />
+            <item
+                android:id="@+id/recents"
                 android:title="Open Recent">
                 <menu>
-                    <item android:id="@+id/clear_recents"
-                        android:title="Clear Recents"
-                        android:icon="@drawable/ic_clear_all_black_24dp"/>
+                    <item
+                        android:id="@+id/clear_recents"
+                        android:icon="@drawable/ic_clear_all_black_24dp"
+                        android:title="Clear Recents" />
                 </menu>
-            </item>>
-            <item android:id="@+id/save_file"
-                android:title="Save file"
-                android:icon="@drawable/ic_save_black_24dp"/>
-<!--            <item android:id="@+id/wrap_content"-->
-<!--                android:title="Wrap Text"-->
-<!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
-<!--                android:checkable="true" />-->
-<!--            <item android:id="@+id/highlight_code"-->
-<!--                android:title="Hightlight Code"-->
-<!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
-<!--                android:checkable="true"-->
-<!--                android:checked="true"/>-->
-            <item android:id="@+id/settings_action"
-                android:title="Settings"
-                android:icon="@drawable/ic_settings_black_24dp" />
+            </item>
+            >
+            <item
+                android:id="@+id/save_file"
+                android:icon="@drawable/ic_save_black_24dp"
+                android:title="Save file" />
+            <!--            <item android:id="@+id/wrap_content"-->
+            <!--                android:title="Wrap Text"-->
+            <!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
+            <!--                android:checkable="true" />-->
+            <!--            <item android:id="@+id/highlight_code"-->
+            <!--                android:title="Hightlight Code"-->
+            <!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
+            <!--                android:checkable="true"-->
+            <!--                android:checked="true"/>-->
+            <item
+                android:id="@+id/settings_action"
+                android:icon="@drawable/ic_settings_black_24dp"
+                android:title="Settings" />
         </menu>
     </item>
 
