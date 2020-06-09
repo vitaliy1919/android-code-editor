@@ -1,17 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="horizontal">
-    <EditText
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_gravity="center"
         android:gravity="center_horizontal"
         android:id="@+id/line_number"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:minWidth="100dp"
+        android:hint="Enter line number">
+    <com.google.android.material.textfield.TextInputEditText
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:inputType="numberDecimal"
-        android:hint="Enter line number"
-        android:layout_margin="5dp"/>
+        />
+    </com.google.android.material.textfield.TextInputLayout>
     <SeekBar
         android:layout_gravity="center"
         android:layout_width="match_parent"

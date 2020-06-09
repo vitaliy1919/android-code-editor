@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.*
 import androidx.fragment.app.DialogFragment
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputLayout
 import ua.vitdmit.codeedit.R
 import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
@@ -25,7 +26,7 @@ class GoToDialog(val scrollView: ScrollView, val lineNumber: Int) : DialogFragme
             val builder = AlertDialog.Builder(it)
             val inflater = layoutInflater
             val root = inflater.inflate(R.layout.dialog_goto, null)
-            val editText = root.findViewById<EditText>(R.id.line_number)
+            val editText = root.findViewById<TextInputLayout>(R.id.line_number)
             val seekBar = root.findViewById<SeekBar>(R.id.line_scroll)
             seekBar.max = lineNumber - 1
             seekBar.progress = 0
@@ -35,7 +36,7 @@ class GoToDialog(val scrollView: ScrollView, val lineNumber: Int) : DialogFragme
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                     changeProgress = true
                     if (!changeText) {
-                        editText.setText((progress + 1).toString())
+                        editText.editText!!.setText((progress + 1).toString())
                     }
                     changeProgress = false
                 }
@@ -46,29 +47,31 @@ class GoToDialog(val scrollView: ScrollView, val lineNumber: Int) : DialogFragme
                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 }
             })
+            editText.addOnEditTextAttachedListener {
+                editText.editText!!.addTextChangedListener(object : TextWatcher {
+                    override fun afterTextChanged(s: Editable?) {
+                        if (s == null || s.toString().isEmpty() || changeProgress)
+                            return
+                        changeText = true
+                        val a = s.toString().toInt()
+                        if ( a < lineNumber) {
+                            seekBar.progress = a - 1
+                        }
+                        changeText = false
 
-            editText.addTextChangedListener(object : TextWatcher {
-                override fun afterTextChanged(s: Editable?) {
-                    if (s == null || s.toString().isEmpty() || changeProgress)
-                        return
-                    changeText = true
-                    val a = s.toString().toInt()
-                    if ( a < lineNumber) {
-                        seekBar.progress = a - 1
                     }
-                    changeText = false
 
-                }
-
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
 //                    TODO("Not yet implemented")
-                }
+                    }
 
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
 //                    TODO
 
-                }
-            })
+                    }
+                })
+            }
+
 //            val adapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_dropdown_item_1line, charset_names)
             // Set the dialog title
             builder.setTitle("Go to line (1..${lineNumber}):")
@@ -78,8 +81,8 @@ class GoToDialog(val scrollView: ScrollView, val lineNumber: Int) : DialogFragme
                     // Set the action buttons
                     .setPositiveButton("Ok",
                             DialogInterface.OnClickListener { dialog, id ->
-                                if (!editText.text.toString().isEmpty()) {
-                                    val value = editText.text.toString().toInt()
+                                if (!editText.editText!!.text.toString().isEmpty()) {
+                                    val value = editText.editText!!.text.toString().toInt()
                                     if (value <= lineNumber) {
                                         val percent = value / lineNumber.toDouble()
                                         val y: Int = ((scrollView.getChildAt(0).height)*percent).toInt()
