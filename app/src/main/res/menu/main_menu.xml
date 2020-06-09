@@ -11,9 +11,7 @@
         android:id="@+id/redo"
         android:icon="@drawable/ic_redo_black_24dp"
         android:title="Redo"
-        app:showAsAction="always"
-
-        />
+        app:showAsAction="always" />
     <item
         android:icon="@drawable/ic_more_vert_24px"
         android:title=""
@@ -38,20 +36,24 @@
                         android:title="Clear Recents" />
                 </menu>
             </item>
-            >
             <item
                 android:id="@+id/save_file"
                 android:icon="@drawable/ic_save_black_24dp"
                 android:title="Save file" />
-            <!--            <item android:id="@+id/wrap_content"-->
-            <!--                android:title="Wrap Text"-->
-            <!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
-            <!--                android:checkable="true" />-->
-            <!--            <item android:id="@+id/highlight_code"-->
-            <!--                android:title="Hightlight Code"-->
-            <!--                android:icon="@drawable/ic_wrap_text_black_24dp"-->
-            <!--                android:checkable="true"-->
-            <!--                android:checked="true"/>-->
+            <item
+                android:id="@+id/find"
+                android:icon="@drawable/ic_search_black_24dp"
+                android:title="Find &amp; Replace" />
+            <item
+                android:id="@+id/goto_line"
+                android:icon="@drawable/ic_go_to_black_24dp"
+                android:title="Go to line" />
+            <item
+                android:id="@+id/highlight"
+                android:title="Highlight as" />
+            <item
+                android:id="@+id/encoding"
+                android:title="Encoding" />
             <item
                 android:id="@+id/settings_action"
                 android:icon="@drawable/ic_settings_black_24dp"
