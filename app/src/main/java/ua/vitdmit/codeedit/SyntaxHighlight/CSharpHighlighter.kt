@@ -3,7 +3,9 @@ package ua.vitdmit.codeedit.SyntaxHighlight
 
 import android.content.Context
 import android.util.Log
+import ua.vitdmit.codeedit.Files.openAssetFile
 import ua.vitdmit.codeedit.SyntaxHighlight.LanguageConstants.*
+import ua.vitdmit.codeedit.SyntaxHighlight.Suggestions.suggestions
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.BracketToken
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.Token
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.TokenType
@@ -241,7 +243,7 @@ class CSharpHighlighter(val context: Context): Highlighter() {
 
     private val reservedWordsTrie = Trie()
     private val digitsPattern: Pattern
-
+    private lateinit var basicSuggestions: ArrayList<String>
     init {
         val digitsRegexes = arrayOf(
                 hexNumber,
@@ -258,11 +260,14 @@ class CSharpHighlighter(val context: Context): Highlighter() {
         val digitsRegex = digitsRegexes.joinToString(separator = ")|(",prefix = "(", postfix = ")")
         Log.d("Pattern","""($digitsRegex) """)
         digitsPattern = Pattern.compile("""($digitsRegex)""", Pattern.CASE_INSENSITIVE)
-
-        for (word in javaReservedWords)
+        basicSuggestions = openAssetFile(context, "csharpmethods.txt")
+        for (word in csharpReservedWords)
             reservedWordsTrie.insert(word)
     }
 
+    override fun getSuggestions(): List<String> {
+        return basicSuggestions + identifiers()
+    }
 
     fun checkNeedUpdate(s:CharSequence, start: Int, end: Int):Boolean {
         for (i in start..end-1) {

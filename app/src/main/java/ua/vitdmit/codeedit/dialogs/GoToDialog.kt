@@ -16,7 +16,9 @@ import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
 
 class GoToDialog(val scrollView: ScrollView, val lineNumber: Int) : DialogFragment() {
-    //    var encoding = ""
+    interface Result {
+        fun onGoToLine(line: Int)
+    }
     init {
 
     }
@@ -81,13 +83,12 @@ class GoToDialog(val scrollView: ScrollView, val lineNumber: Int) : DialogFragme
                     // Set the action buttons
                     .setPositiveButton("Ok",
                             DialogInterface.OnClickListener { dialog, id ->
+
                                 if (!editText.editText!!.text.toString().isEmpty()) {
                                     val value = editText.editText!!.text.toString().toInt()
-                                    if (value <= lineNumber) {
-                                        val percent = value / lineNumber.toDouble()
-                                        val y: Int = ((scrollView.getChildAt(0).height)*percent).toInt()
-                                        scrollView.smoothScrollTo(0, y)
-                                    }
+                                    if (activity is Result)
+                                        (activity as Result).onGoToLine(value)
+
 
                                 }
 

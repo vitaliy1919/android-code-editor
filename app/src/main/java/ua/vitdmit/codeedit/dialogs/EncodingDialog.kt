@@ -44,9 +44,6 @@ class EncodingDialog(val codeEdit: TextView, var encoding:String) : DialogFragme
                     // Set the action buttons
                     .setPositiveButton("Ok",
                             DialogInterface.OnClickListener { dialog, id ->
-                                // User clicked OK, so save the selectedItems results somewhere
-                                // or return them to the component that opened the dialog
-//                                ...
                                 try {
                                     codeEdit.text = String(codeEdit.text.toString().toByteArray(charset(currentEncoding)), Charset.forName(encoding))
                                 } catch (e: UnsupportedEncodingException) {

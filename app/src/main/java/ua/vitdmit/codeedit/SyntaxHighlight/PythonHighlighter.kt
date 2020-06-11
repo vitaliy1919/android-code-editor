@@ -3,6 +3,7 @@ package ua.vitdmit.codeedit.SyntaxHighlight
 
 import android.content.Context
 import android.util.Log
+import ua.vitdmit.codeedit.Files.openAssetFile
 import ua.vitdmit.codeedit.SyntaxHighlight.LanguageConstants.*
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.BracketToken
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.Token
@@ -16,11 +17,15 @@ import kotlin.collections.HashSet
 import kotlin.math.min
 
 class PythonHighlighter(val context: Context): Highlighter() {
+    override fun getSuggestions(): List<String> {
+        return basicSuggestions + identifiers()
+    }
 
     override fun brackets(): ArrayList<BracketToken> {
         return tokenBrackets
     }
 
+    private lateinit var basicSuggestions: ArrayList<String>
     var tokenIdentifiers: HashSet<String> = HashSet()
     var tokenBrackets: ArrayList<BracketToken> = ArrayList()
     override fun identifiers(): HashSet<String> {
@@ -258,7 +263,7 @@ class PythonHighlighter(val context: Context): Highlighter() {
         val digitsRegex = digitsRegexes.joinToString(separator = ")|(",prefix = "(", postfix = ")")
         Log.d("Pattern","""($digitsRegex) """)
         digitsPattern = Pattern.compile("""($digitsRegex)""", Pattern.CASE_INSENSITIVE)
-
+        basicSuggestions = openAssetFile(context, "pythonmethods.txt")
         for (word in pythonReservedWords)
             reservedWordsTrie.insert(word)
     }

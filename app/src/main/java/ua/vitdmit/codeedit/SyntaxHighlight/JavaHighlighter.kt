@@ -1,7 +1,9 @@
 package ua.vitdmit.codeedit.SyntaxHighlight
 
 import android.content.Context
+import android.content.SearchRecentSuggestionsProvider
 import android.util.Log
+import ua.vitdmit.codeedit.Files.openAssetFile
 import ua.vitdmit.codeedit.SyntaxHighlight.LanguageConstants.*
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.BracketToken
 import ua.vitdmit.codeedit.SyntaxHighlight.Tokens.Token
@@ -240,7 +242,7 @@ class JavaHighlighter(val context: Context): Highlighter() {
 
     private val reservedWordsTrie = Trie()
     private val digitsPattern: Pattern
-
+    private lateinit var basicSuggestions: ArrayList<String>
     init {
         val digitsRegexes = arrayOf(
                 hexNumber,
@@ -257,11 +259,14 @@ class JavaHighlighter(val context: Context): Highlighter() {
         val digitsRegex = digitsRegexes.joinToString(separator = ")|(",prefix = "(", postfix = ")")
         Log.d("Pattern","""($digitsRegex) """)
         digitsPattern = Pattern.compile("""($digitsRegex)""", Pattern.CASE_INSENSITIVE)
-
+        basicSuggestions = openAssetFile(context, "javamethods.txt")
         for (word in javaReservedWords)
             reservedWordsTrie.insert(word)
     }
 
+    override fun getSuggestions(): List<String> {
+        return basicSuggestions + identifiers()
+    }
 
     fun checkNeedUpdate(s:CharSequence, start: Int, end: Int):Boolean {
         for (i in start..end-1) {

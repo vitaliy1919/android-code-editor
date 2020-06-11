@@ -7,8 +7,13 @@ import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.DialogFragment
 import ua.vitdmit.codeedit.R
+import ua.vitdmit.codeedit.SyntaxHighlight.Languages
 
-class HighlightDialog : DialogFragment() {
+class HighlightDialog(var highLightPosition:Int) : DialogFragment() {
+    interface Result {
+        fun onHighlightResult(position: Int)
+    }
+    var position = 0
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return activity?.let {
             val selectedItems = ArrayList<Int>() // Where we track the selected items
@@ -17,19 +22,21 @@ class HighlightDialog : DialogFragment() {
             builder.setTitle("Highlight as:")
                     // Specify the list array, the items to be selected by default (null for none),
                     // and the listener through which to receive callbacks when items are selected
-                    .setSingleChoiceItems(R.array.highlight_values, 1,DialogInterface.OnClickListener({dialog, position ->
+                    .setSingleChoiceItems(R.array.highlight_values, highLightPosition) { dialog, position ->
                         Log.d("HighlightDialog", position.toString())
-                    }) )
+                        this@HighlightDialog.position = position
+                    }
                     // Set the action buttons
-                    .setPositiveButton("Ok",
-                            DialogInterface.OnClickListener { dialog, id ->
-                                // User clicked OK, so save the selectedItems results somewhere
-                                // or return them to the component that opened the dialog
-//                                ...
-                            })
-                    .setNegativeButton("Cancel",
-                            DialogInterface.OnClickListener { dialog, id ->
-                            })
+                    .setPositiveButton("Ok"
+                    ) { dialog, id ->
+                        if (activity is Result) {
+                            (activity as Result).onHighlightResult(position)
+                        }
+
+                    }
+                    .setNegativeButton("Cancel"
+                    ) { dialog, id ->
+                    }
 
             builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")
